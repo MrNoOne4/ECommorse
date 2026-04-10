@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admin Dashboard - E-Shopping App</title>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <link rel="stylesheet" href="style.css">
+        <script
+            src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    </head>
+    <body>
+
+        <section class="card">
+
+            <!-- ASIDE NAVIGATION -->
+            <aside id="dashboardNav">
+                <h2>Admin Panel</h2>
+                <nav>
+                    <ul>
+                        <li><a href="#productsSection"
+                                id="productNav">Products</a></li>
+                        <li><a href="#transactionRecord"
+                                id="transactionNav">Transaction Record</a></li>
+
+                        <li><a id="logoutNav">Logout</a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <main>
+
+                <!-- PRODUCT DASHBOARD -->
+                <section id="productDashboard">
+                    <div class="header">
+                        <h2>Admin Dashboard</h2>
+                        <button id="clearStorage">Clear Storage</button>
+                    </div>
+
+                    <h3>Product Management (CRUD)</h3>
+                    <!-- PRODUCT FORM -->
+                    <form id="productForm">
+                        <input type="text" id="productName"
+                            placeholder="Product Name">
+                        <input type="number" id="productPrice"
+                            placeholder="Price">
+                        <select
+                            class="bg-bg border border-border rounded-xl py-2 px-3 text-sm text-text-blue outline-none cursor-pointer focus:border-accent font-sans"
+                            id="categoryFilter">
+                            <option value="all">All Categories</option>
+                            <option
+                                value="Electronics">Electronics</option>
+                            <option value="Foods">Foods</option>
+                            <option value="Clothes">Clothes</option>
+                            <option value="Shoes">Shoes</option>
+                            <option value="Books">Books</option>
+                        </select>
+
+                        <input type="number" id="productQty"
+                            placeholder="Quantity">
+                        <input type="text" id="productImage"
+                            placeholder="Image URL">
+
+                        <textarea id="productDescription"
+                            placeholder="Product Description"></textarea>
+                        <!-- Error box comes after inputs, before button -->
+                        <div id="errorBox" style="display:none;"></div>
+
+                        <button>Add Product</button>
+
+                    </form>
+
+                    <h3>Products</h3>
+
+                    <!-- FILTER SEARCH -->
+                    <div id="searchFilter">
+                        <input type="text" id="searchInput"
+                            placeholder="Search by product name">
+
+                        <select id="filterSelect">
+                            <option value>All</option>
+                            <option value="Low">Below 100</option>
+                            <option value="Medium">Price 100-500</option>
+                            <option value="High">Higher than 500</option>
+                        </select>
+                    </div>
+
+                    <!-- CARD CONTAINER -->
+                    <div id="itemContainer">
+
+                    </div>
+
+                </section>
+
+                <section id="transactionContainer"
+                    class="h-full w-full ">
+                    <h2>Transaction Record</h2>
+                    <div class="mx-auto max-h-screen-lg px-4 py-8 sm:px-8">
+
+                        <div
+                            class="overflow-y-hidden  border w-full bg-pink-300">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-center">
+                                    <thead>
+                                        <tr
+                                            class="bg-blue-600  text-xs font-semibold uppercase tracking-widest text-white">
+                                            <th class="px-5 py-3">Date</th>
+                                            <th class="px-5 py-3">Product
+                                                Name</th>
+                                            <th class="px-5 py-3">Product
+                                                ID</th>
+                                            <th class="px-5 py-3">Product
+                                                Quantity</th>
+                                            <th class="px-5 py-3">Product
+                                                Price</th>
+                                            <th class="px-5 py-3">Product
+                                                Total Sales</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-500" id="tbody">
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </section>
+                <div id="snackbar">Some text some message..</div>
+
+                <div id="myModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h3 id="modalTitle">Are you sure you want to delete all
+                            stored data</h3>
+                        <p id="modalMessage">This action is permanent and cannot
+                            be undone.</p>
+                        <div class="modal-actions">
+                            <button id="modalConfirm">Confirm</button>
+                            <button id="modalCancel">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </section>
+
+        <script src="Product.js"></script>
+        <script src="admin.js"></script>
+    </body>
+</html>

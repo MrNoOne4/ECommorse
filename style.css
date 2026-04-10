@@ -1,0 +1,496 @@
+/* ========================
+   RESET & BASE
+======================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ========================
+     LAYOUT – CARD (sidebar + main)
+======================== */
+section.card {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+aside#dashboardNav {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: #0f172a;
+  color: white;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+}
+
+main {
+  background: #ffffff;
+  padding: 2rem;
+}
+
+/* ========================
+    SIDEBAR NAV
+======================== */
+#dashboardNav h2 {
+  font-size: 1.6rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #e2e8f0;
+}
+
+#dashboardNav ul {
+  list-style: none;
+}
+
+#dashboardNav li {
+  margin: 0.5rem 0;
+}
+
+#dashboardNav a {
+  color: #cbd5e1;
+  text-decoration: none;
+  display: block;
+  padding: 0.8rem 1.2rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+#dashboardNav a:hover,
+#dashboardNav a.active {
+  background: #1e293b;
+  color: white;
+}
+
+/* ========================
+    TYPOGRAPHY
+======================== */
+h2 {
+  font-size: 2.1rem;
+  margin-bottom: 1.5rem;
+  color: #0f172a;
+}
+
+h3 {
+  font-size: 1.45rem;
+  margin: 2.2rem 0 1.2rem;
+  color: #334155;
+}
+
+/* ========================
+    PRODUCT FORM
+======================== */
+#productForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 2.5rem;
+}
+
+#productForm input,
+#productForm textarea {
+  padding: 0.85rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+#productDescription {
+  grid-column: 1 / -1;
+  min-height: 110px;
+  resize: vertical;
+}
+
+#productForm button, #clearStorage {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#clearStorage {
+  background-color: red;
+}
+
+#clearStorage:hover {
+  background-color: darkred;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#productForm button:hover {
+  background: #2563eb;
+}
+
+/* ========================
+    ERROR BOX
+======================== */
+#errorBox {
+  grid-column: 1 / -1;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  margin: 0.5rem 0;
+}
+
+/* ========================
+    SEARCH + FILTER
+======================== */
+#searchFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+
+#searchInput,
+#filterSelect, #categoryFilter {
+  padding: 0.8rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  min-width: 220px;
+  flex: 1;
+}
+
+/* ========================
+    PRODUCT GRID
+======================== */
+#itemContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+  gap: 1.6rem;
+}
+
+/* Product Card */
+.product-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+  margin: 5px;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.product-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: contain;
+}
+
+.product-card h4 {
+  font-size: 1.15rem;
+  margin: 0.9rem 1rem 0.4rem;
+}
+
+.product-card p {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0 1rem 0.9rem;
+}
+
+.product-card .actions {
+  margin-top: auto;
+  padding: 0 1rem 1rem;
+  display: flex;
+  gap: 0.6rem;
+}
+
+#btnClearAllProducts {
+  cursor: pointer;
+  border-radius: 5px;
+  border: none;
+  padding: 10px;
+  background: #ff0e0e;
+  color: white;
+}
+
+.editBtn {
+  background: #f59e0b;
+  color: white;
+}
+
+.deleteBtn {
+  background: #ef4444;
+  color: white;
+}
+
+.product-card button {
+  flex: 1;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ========================
+    USERS TABLE
+======================== */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.users-table th,
+.users-table td {
+  padding: 1.1rem 1.3rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.users-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  color: #475569;
+  letter-spacing: 0.4px;
+}
+
+.users-table tr:hover {
+  background: #f9fafb;
+}
+
+.deleteUserBtn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.deleteUserBtn:hover {
+  background: #dc2626;
+}
+
+/* ========================
+    RESPONSIVE DESIGN
+======================== */
+@media (max-width: 1024px) {
+  section.card {
+    grid-template-columns: 220px 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  section.card {
+    grid-template-columns: 1fr;
+  }
+
+  aside#dashboardNav {
+    position: relative;
+    height: auto;
+    width: 100%;
+  }
+
+  main {
+    padding: 1.5rem;
+  }
+
+  #itemContainer {
+    grid-template-columns: 1fr;
+  }
+
+  #productForm {
+    grid-template-columns: 1fr;
+  }
+
+  #searchFilter {
+    flex-direction: column;
+  }
+
+  #searchInput,
+  #filterSelect {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .users-table thead {
+    display: none;
+  }
+
+  .users-table tr {
+    display: block;
+    margin-bottom: 1.2rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+  }
+
+  .users-table td {
+    display: block;
+    text-align: right;
+    border: none;
+    position: relative;
+    padding: 0.9rem 1rem 0.9rem 50%;
+  }
+
+  .users-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+}
+
+#snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 2px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  top: 30px;
+  font-size: 17px;
+}
+
+#snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@-webkit-keyframes fadein {
+  from {top: 0; opacity: 0;} 
+  to {top: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {top: 0; opacity: 0;}
+  to {top: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {top: 30px; opacity: 1;} 
+  to {top: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {top: 30px; opacity: 1;}
+  to {top: 0; opacity: 0;}
+}
+
+/* ========================
+    MODAL
+======================== */
+.modal {
+  display: none;
+  /*Hiddenbydefault*/position: fixed;
+  z-index: 1000;
+  /*Aboveallcontent*/left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+  /*semi-transparentbackground*/:;
+  -webkit-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 1.5rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  position: relative;
+  
+}
+
+.modal-content h3 {
+  margin-bottom: 1rem;
+  color: #0f172a;
+}
+
+.modal-content p {
+  margin-bottom: 1.5rem;
+  color: #334155;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-around;
+}
+
+.modal-actions button {
+  padding: 0.8rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+#modalConfirm {
+  background-color: #3b82f6;
+  color: white;
+}
+
+#modalCancel {
+  background-color: #ef4444;
+  color: white;
+}
+
+.modal .close {
+  position: absolute;
+  top: 0.6rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+}
