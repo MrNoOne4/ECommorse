@@ -41,50 +41,60 @@ document.querySelector("#createAccountForm").addEventListener("submit", (e) => {
 });
 
 // Search for an account in localStorage using the email
-function findAccountByEmail(email) {
-  let accounts = localStorage.getItem("account");
+//  function findAccountByEmail(email) {
+//   // let accounts = localStorage.getItem("account");
 
-  // Convert stored JSON string into an array
-  if (accounts) {
-    accounts = JSON.parse(accounts);
-  } else {
-    accounts = [];
-  }
+//   // // Convert stored JSON string into an array
+//   // if (accounts) {
+//   //   accounts = JSON.parse(accounts);
+//   // } else {
+//   //   accounts = [];
+//   // }
 
-  // Loop through accounts and return the matching one
-  for (let i = 0; i < accounts.length; i++) {
-    if (accounts[i].email === email) {
-      return accounts[i];
-    }
-  }
+//   // // Loop through accounts and return the matching one
+//   // for (let i = 0; i < accounts.length; i++) {
+//   //   if (accounts[i].email === email) {
+//   //     return accounts[i];
+//   //   }
+//   // }
 
-  // Return null if no account matches
-  return null;
-}
+//   // Return null if no account matches
+//   return UserService.findByEmail(email);
+// }
 
 // Validate signup details and create a new account
-function validateSignUp(e) {
+async function validateSignUp(e) {
   const email = e.target.email.value;
   const password = e.target.password.value;
   const confirmPassword = e.target.confirmPassword.value;
 
   // Prevent users from using the admin email
-  if (email === "admin@gmail.com") {
-    toast("Email already exists", false, "#toast-default");
+  // if (email === "admin@gmail.com") {
+  //   toast("Email already exists", false, "#toast-default");
+  //   return false;
+  // }
+
+  if (!UserValidator.isValidEmail(email)) {
+    toast("Invalid email format", false, "#toast-default");
+    return false;
+  }
+
+  if (!UserValidator.isValidPassword(password) || !UserValidator.isValidPassword(confirmPassword)) {
+    toast("Password must be at least 8 characters long and include an uppercase letter, a number, and a special character", false, "#toast-default");
     return false;
   }
 
   // Check if password and confirm password match
-  if (password !== confirmPassword) {
+  if (!UserValidator.isSamePassword(password, confirmPassword)) {
     toast("Password do not match", false, "#toast-default");
     return false;
   }
 
   // Get existing accounts from localStorage
-  accounts = JSON.parse(localStorage.getItem("account")) || [];
+  // accounts = JSON.parse(localStorage.getItem("account")) || [];
 
   // Check if email is already registered
-  const isFound = findAccountByEmail(email);
+  const isFound = await UserService.findByEmail(email);
 
   if (isFound) {
     toast("Email already exists", false, "#toast-default");
@@ -93,27 +103,52 @@ function validateSignUp(e) {
 
   // Create a new user account
   const account = new User(email, password);
-  accounts.push(account);
+  // accounts.push(account);
+  const res = await fetch("register.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      email: account.email,
+      password: account.password,
+    }),
+  });
+
+
+
+  if (!res.ok) {
+    toast("Error creating account", false, "#toast-default");
+    return false;
+  }
+
+  const result = await res.json();
+
+  if (result.success) {
+    toast("Account created successfully!", true, "#toast-default");
+  } else {
+    toast("Error creating account : " + result.message, false, "#toast-default");
+    return false;
+  }
+  
 
   // Save updated accounts back to localStorage
-  localStorage.setItem("account", JSON.stringify(accounts));
+  // localStorage.setItem("account", JSON.stringify(accounts));
 
   // Hide signup form and show success message
   hideForms("signUpForm");
   toast("Account created successfully!", true, "#toast-default");
 
   // Mark user as logged in
-  localStorage.setItem("login", JSON.stringify(true));
   updateAuthButtons();
   hideForms("loginForm");
   navigation();
 
   // Load products and display them
-  let products = JSON.parse(localStorage.getItem("products"));
-  showProducts(products);
+  // let products = JSON.parse(localStorage.getItem("products"));
+  // displayProducts(products);
 
   // Save current user email as the token
-  localStorage.setItem("token", email);
 
   // Refresh transaction, cart, and profile display
   renderTransaction();
@@ -122,6 +157,7 @@ function validateSignUp(e) {
 
   return true;
 }
+
 
 // Initialize and display the user's profile in the UI
 function initializedProfile() {
@@ -165,24 +201,47 @@ function initializedProfile() {
 }
 
 // Validate login credentials
-function validateLogin(e) {
+async function validateLogin(e) {
   const email = e.target.email.value;
   const password = e.target.password.value;
 
   // Special admin login
   if (email === "admin@gmail.com" && password === "admin123") {
-    return (window.location.href = "admin-dashboard.html");
+    return (window.location.href = "adminDashboard.html");
   }
 
   // Search for the account
-  const isFound = findAccountByEmail(email);
+  const isFound = await UserService.findByEmail(email);
 
-  if (isFound !== null) {
-    // Check if password matches
-    if (isFound.password !== password) {
-      toast("Password incorrect", false, "#toast-default");
+  if (isFound) {
+    toast("Account not found", false, "#toast-default");
+    return false;
+  } 
+  
+    const res = await fetch("login.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        email: email,
+        password: password
+      })
+    });
+
+    if (!res.ok) {
+      toast("Error logging in", false, "#toast-default");
       return false;
     }
+
+    const result = await res.json();
+
+    if (result.error) {
+      toast(result.error, false, "#toast-default");
+      return false;
+    }
+
 
     // Login success
     localStorage.setItem("login", JSON.stringify(true));
@@ -192,19 +251,16 @@ function validateLogin(e) {
     navigation();
 
     // Reload app data after login
-    let products = JSON.parse(localStorage.getItem("products"));
-    showProducts(products);
+    // let products = JSON.parse(localStorage.getItem("products"));
+    // showProducts(products);
     localStorage.setItem("token", email);
     renderTransaction();
     updateCartCount();
     initializedProfile();
 
     return true;
-  } else {
-    toast("Account not found", false, "#toast-default");
-    return false;
-  }
 }
+
 
 // Logout button
 document.getElementById("logoutBtn").addEventListener("click", () => {
@@ -218,7 +274,7 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 
   hidePages(0);
   updateAuthButtons();
-  showProducts(product);
+  displayProducts(product);
 
   // Reset cart count display
   $("#cartCount").text("0");
@@ -288,7 +344,7 @@ const confirmDeletion = () => {
   initializedProfile();
   updateAuthButtons();
   resetCheckOutForm();
-  showProducts(JSON.parse(localStorage.getItem("products")));
+  displayProducts(JSON.parse(localStorage.getItem("products")));
   updateAuthButtons();
   updateCartCount();
   renderTransaction();
@@ -375,7 +431,7 @@ document.querySelector("#updateBtn").addEventListener("click", function () {
   initializedProfile();
   updateAuthButtons();
   resetCheckOutForm();
-  showProducts(JSON.parse(localStorage.getItem("products")));
+  displayProducts(JSON.parse(localStorage.getItem("products")));
   updateCartCount();
   renderTransaction();
 

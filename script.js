@@ -1,5 +1,5 @@
-
 "use strict";
+let products = [];
 // Retrieve login status from localStorage (defaults to false if not found)
 let isLogin = JSON.parse(localStorage.getItem("login")) || false;
 
@@ -96,6 +96,8 @@ async function fetchProducts() {
     console.log(error);
   }
 }
+
+
 
 
 // Global function to remove product from cart (accessible via onclick handlers)
@@ -236,7 +238,7 @@ window.addToCart = (index) => {
     existing.productQuantity++;
     products[index].stock -= 1;
     localStorage.setItem("products", JSON.stringify(products));
-    displayProducts();
+    // displayProducts();
   } else {
     // Add new product to cart
     cart.push({
@@ -249,7 +251,7 @@ window.addToCart = (index) => {
 
     products[index].stock -= 1;
     localStorage.setItem("products", JSON.stringify(products));
-    displayProducts();
+    // displayProducts();
   }
 
   // Save updated cart and refresh display
@@ -274,6 +276,14 @@ window.addToCart = (index) => {
     }, 1000);
   }
 };
+
+async function loadProducts() {
+  products = await fetchProducts();
+  displayProducts(products);
+}
+
+
+
 
 // Removes a product completely from the cart and restores stock
 function removeCart(productCode) {
@@ -317,7 +327,7 @@ function removeCart(productCode) {
   saveCart(newCart);
 
   renderCart();
-  displayProducts();
+  // displayProducts();
 }
 
 // Global function to change product quantity in cart (called via inline onclick)
@@ -390,8 +400,9 @@ window.changeQty = (productCode, delta, action) => {
   localStorage.setItem("products", JSON.stringify(products));
   saveCart(cart);
   renderCart();
-  displayProducts();
+  // displayProducts();
 };
+
 
 
 // Renders the shopping cart table and order summary modal
@@ -624,31 +635,21 @@ let categoryValue = "all";
 /**
  * Filters products based on search text and category
  */
-function applyFilters() {
-  const filtered = [];
+async function applyFilters() {
 
-  // Loop through all products
-  for (let i = 0; i < products.length; i++) {
-    const p = products[i];
+  const res = await fetch(`Productdb.php?category=${encodeURIComponent(categoryValue)}&search=${encodeURIComponent(searchValue)}`, {
+    method: "GET",
+  })
 
-    // Check if product name matches the search input (case-insensitive)
-    const matchSearch = p.name
-      .toLowerCase()
-      .includes(searchValue.toLowerCase());
-
-    // Check if product matches selected category (case-insensitive)
-    const matchCategory =
-      categoryValue === "all" ||
-      p.category.toLowerCase() === categoryValue.toLowerCase();
-
-    // Include product only if both conditions are true
-    if (matchSearch && matchCategory) {
-      filtered.push(p);
-    }
+  if (!res.ok) {
+    console.error("Failed to fetch products:", res.message);
+    return;
   }
 
-  // Display filtered products
-  displayProducts();
+  const products = await res.json();
+
+  console.log(products);
+  displayProducts(products);
 }
 
 // Listen for typing in the search input
@@ -662,6 +663,8 @@ document.getElementById("categoryFilter").addEventListener("change", (e) => {
   categoryValue = e.target.value;
   applyFilters();
 });
+
+
 
 /**
  * Renders product cards to the UI
@@ -694,7 +697,7 @@ async function displayProducts(products) {
 
           <!-- Product Image -->
           <img class="rounded-lg mb-4 h-48 w-full object-contain cursor-default hover:scale-105 transition-transform duration-300 ease-in-out"
-            src="${e.image_url || "https://via.placeholder.com/200"}"
+            src="${e.img || "https://via.placeholder.com/200"}"
             onerror="this.src='https://via.placeholder.com/200'"
             alt="${e.name}" />
 
@@ -786,8 +789,8 @@ function toast(message, status, element) {
 // ── Initial Page Setup ────────────────────────────────────────────────────────
 // Update authentication UI buttons based on login status
 updateAuthButtons();
-// Display all products on page load
-displayProducts();
+
+loadProducts();
 // Update cart count in header
 updateCartCount();
 // Render the shopping cart table
