@@ -1,3 +1,5 @@
+
+
 "use strict";
 let products = [];
 // Retrieve login status from localStorage (defaults to false if not found)
@@ -57,7 +59,6 @@ navigation();
 function showForms() {
   document.querySelector("#loginForm").classList.remove("-translate-y-[200%]");
   document.querySelector("#loginForm").classList.add("-translate-y-1/2");
-
   // Bring all form containers to the front with high z-index
   let formContainers = document.querySelectorAll(".formContainer");
 
@@ -281,8 +282,6 @@ async function loadProducts() {
   products = await fetchProducts();
   displayProducts(products);
 }
-
-
 
 
 // Removes a product completely from the cart and restores stock
@@ -663,6 +662,10 @@ document.getElementById("categoryFilter").addEventListener("change", (e) => {
   categoryValue = e.target.value;
   applyFilters();
 });
+
+
+
+
 
 
 

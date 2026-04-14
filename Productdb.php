@@ -4,33 +4,47 @@ header("Content-Type: application/json");
 $conn = new mysqli("localhost", "root", "M@thew11!", "ECommorse");
 
 if ($conn->connect_error) {
-    die(json_encode(["error" => "Connection failed"]));
+    die(json_encode(["error" => "Connection Failed"]));
 }
 
 $sql = "SELECT * FROM products WHERE 1=1";
+$params = [];
+$types = "";
 
-$category = $_GET['category'] ?? 'all';
+// Get inputs
 $search = $_GET['search'] ?? '';
+$price = $_GET['price'] ?? '';
 
+// Build query safely
 if (!empty($search)) {
-    $search = $conn->real_escape_string($search);
-    $sql .= " AND name LIKE '%$search%'";
+    $sql .= " AND name LIKE ?";
+    $params[] = "%$search%";
+    $types .= "s";
 }
 
-
-if ($category !== "all" && !empty($category)) {
-    $category = $conn->real_escape_string($category);
-    $sql .= " AND category = '$category'";
+if (!empty($price)) {
+    $sql .= " AND price = ?";
+    $params[] = $price;
+    $types .= "d"; // or "i" depending on your column type
 }
 
-$result = $conn->query($sql);
+// Prepare statement
+$stmt = $conn->prepare($sql);
 
+// Bind if there are parameters
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+
+// Execute
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Fetch results
 $products = [];
 
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $products[] = $row;
-    }
+while ($row = $result->fetch_assoc()) {
+    $products[] = $row;
 }
 
 echo json_encode($products);

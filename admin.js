@@ -1,6 +1,7 @@
 // Get products and accounts from localStorage (or empty array if none)
-let arritems = JSON.parse(localStorage.getItem("products")) || [];
-let arrUser = JSON.parse(localStorage.getItem("accounts")) || [];
+let arritems = []
+let tempId = "";
+// let arrUser = JSON.parse(localStorage.getItem("accounts")) || [];
 
 // Used to track if user is editing an existing product
 let editingIndex = -1;
@@ -10,7 +11,6 @@ $(document).ready(function () {
 
   // Display all products on load
   displayItems();
-
   // Logout button
   $("#logoutNav").click(function () {
     if (confirm("Do you want to log out?")) {
@@ -18,15 +18,31 @@ $(document).ready(function () {
     }
   });
 
+  function hideContainers() {
+     $("#transactionContainer").hide();
+     $("#cancelRecordContainer").hide();
+  }
+
+   hideContainers();
+
   // NAVIGATION (switch between product and transaction views)
   $("#productNav").click(function () {
     $("#productDashboard").show();
     $("#transactionContainer").hide();
+     $("#cancelRecordContainer").hide();
+
   });
 
   $("#transactionNav").click(function () {
     $("#productDashboard").hide();
     $("#transactionContainer").show();
+    $("#cancelRecordContainer").hide();
+  });
+
+  $(document).on("click", "#cancelNav", function() {
+    $("#productDashboard").hide();
+    $("#transactionContainer").hide();
+    $("#cancelRecordContainer").show();
   });
 
   // PRODUCT FORM submission
@@ -45,34 +61,34 @@ $(document).ready(function () {
   });
 
   // EDIT BUTTON (populate form with selected product)
-  $(document).on("click", ".editBtn", function () {
-    let index = $(this).data("index");
-    let item = arritems[index];
+  // $(document).on("click", ".editBtn", function () {
+  //   let index = $(this).data("index");
+  //   let item = arritems[index];
 
-    // Fill form fields with product data
-    $("#productName").val(item.name);
-    $("#productPrice").val(item.price);
-    $("#categoryFilter").val(item.category);
-    $("#productQty").val(item.stock);
-    $("#productDescription").val(item.description);
-    $("#productImage").val(item.img);
+  //   // Fill form fields with product data
+  //   $("#productName").val(item.name);
+  //   $("#productPrice").val(item.price);
+  //   $("#categoryFilter").val(item.category);
+  //   $("#productQty").val(item.stock);
+  //   $("#productDescription").val(item.description);
+  //   $("#productImage").val(item.img);
 
-    // Save index to know we're editing
-    editingIndex = index;
-  });
+  //   // Save index to know we're editing
+  //   editingIndex = index;
+  // });
 
   // Generate a random product ID
-  function generateProductId(length = 6) {
-    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-    let id = "";
+  // function generateProductId(length = 6) {
+  //   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  //   let id = "";
 
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * chars.length);
-      id += chars[randomIndex];
-    }
+  //   for (let i = 0; i < length; i++) {
+  //     const randomIndex = Math.floor(Math.random() * chars.length);
+  //     id += chars[randomIndex];
+  //   }
 
-    return id;
-  }
+  //   return id;
+  // }
 
   // Load products from localStorage
   function loadAllData() {
@@ -100,7 +116,9 @@ $(document).ready(function () {
   }
 
   // Initialize clear button state
-  clearBtn();
+  
+
+
 
   function clearBtn() {
     // Disable button if no products exist
@@ -119,146 +137,135 @@ $(document).ready(function () {
   }
 
   // DISPLAY PRODUCTS
-  function displayItems() {
-    $("#itemContainer").html(" "); // Clear container
+  async function displayItems() {
+    $("#itemContainer").html(" ");
+
+    const res = await fetch(`adminProductdb.php?search=${encodeURIComponent($("#searchInput").val())}&price=${encodeURIComponent($("#filterSelect").val())}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      console.error("Failed to fetch products:", res.statusText);
+      return;
+    }
+
+    arritems = await res.json();
+    
+
 
     if (Array.isArray(arritems) && arritems.length !== 0) {
-      let searchItem = $("#searchInput").val().toLowerCase();
-      let filterItem = $("#filterSelect").val();
 
       // Reload latest data
-      arritems = loadAllData();
-
-      $.each(arritems, function (index, item) {
-
-        // SEARCH filter
-        if (searchItem && !item.name.toLowerCase().includes(searchItem)) {
-          return;
-        }
-
-        // PRICE FILTER
-        if (filterItem) {
-          if (filterItem === "Low" && item.price >= 100) return;
-          if (filterItem === "Medium" && (item.price < 100 || item.price > 500)) return;
-          if (filterItem === "High" && item.price <= 500) return;
-        }
+      $.each(arritems, function (index, item) {  
 
         // Create product card
         let card = `
-        <div class="product-card">
-            <img src="${item.img}" width="120">
-            <h4>${item.name}</h4>
-            <p>${item.description}</p>
-            <p>Price: ₱${item.price}</p>
-            <p>Stock: ${item.stock}</p>
-            
-            <div class="actions">
-                <button class="editBtn" data-index="${index}">Edit</button>
-                <button class="deleteBtn" data-index="${index}">Delete</button>
+            <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col hover:border-slate-300 hover:shadow-md transition-all duration-200">
+              <img src="${item.img}" alt="${item.name}" class="w-full h-36 object-contain bg-slate-50 p-3">
+              <div class="px-4 pt-3">
+                <span class="inline-block text-xs font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-800">${item.category ?? 'Product'}</span>
+              </div>
+              <div class="flex flex-col gap-1 px-4 pt-2 pb-3 flex-1">
+                <p class="text-sm font-semibold text-slate-900 m-0">${item.name}</p>
+                <p class="text-xs text-slate-500 leading-relaxed line-clamp-2 m-0">${item.description}</p>
+                <div class="flex justify-between items-center mt-2">
+                  <span class="text-base font-bold text-slate-900">₱${Number(item.price).toLocaleString()}</span>
+                  <span class="text-xs px-2 py-1 rounded-full border ${item.stock <= 5 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">Stock: ${item.stock}</span>
+                </div>
+              </div>
+              <div class="flex gap-2 px-4 pb-4">
+                <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 transition-colors border-none cursor-pointer" type="button" onclick="editProduct(${item})">Edit</button>
+                <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-red-100 text-red-800 hover:bg-red-200 transition-colors border-none cursor-pointer" type="button" onclick="deleteProduct(${item.productId}, '${item.name}')">Delete</button>
+              </div>
             </div>
-        </div>
-        `;
-
+            `;
         // Add card to page
         $("#itemContainer").append(card);
       });
     }
+    clearBtn();
   }
 
-  // DELETE PRODUCT
-  $(document).on("click", ".deleteBtn", function () {
-    let index = $(this).data("index");
-    let item = arritems[index];
 
-    let products = JSON.parse(localStorage.getItem("products")) || [];
-    let tempProduct = [];
 
-    // Keep all products except the deleted one
-    for (let i = 0; i < products.length; i++) {
-      if (products[i].productCode !== item.productCode) {
-        tempProduct.push(products[i]);
-      }
-    }
-
-    localStorage.setItem("products", JSON.stringify(tempProduct));
-    displayItems();
-  });
 
   // HANDLE FORM SUBMISSION (ADD / EDIT PRODUCT)
-  function productFormSubmit(e) {
-    e.preventDefault();
+  // function productFormSubmit(e) {
+  //   e.preventDefault();
 
-    // Get input values
-    let name = $("#productName").val().trim();
-    let price = parseFloat($("#productPrice").val());
-    let category = $("#categoryFilter").val();
-    let quantity = parseInt($("#productQty").val());
-    let description = $("#productDescription").val().trim();
-    let imageUrl = $("#productImage").val().trim();
+  //   // Get input values
+  //   let name = $("#productName").val().trim();
+  //   let price = parseFloat($("#productPrice").val());
+  //   let category = $("#categoryFilter").val();
+  //   let quantity = parseInt($("#productQty").val());
+  //   let description = $("#productDescription").val().trim();
+  //   let imageUrl = $("#productImage").val().trim();
 
-    // VALIDATION
-    if (name === "") {
-      myToast("Product Name must not be empty.", "Danger");
-      return;
-    }
+  //   // VALIDATION
+  //   if (name === "") {
+  //     myToast("Product Name must not be empty.", "Danger");
+  //     return;
+  //   }
 
-    if (description === "") {
-      myToast("Product Description must not be empty.", "Danger");
-      return;
-    }
+  //   if (description === "") {
+  //     myToast("Product Description must not be empty.", "Danger");
+  //     return;
+  //   }
 
-    if (!imageUrl) {
-      myToast("Product must have an image.", "Danger");
-      return;
-    }
+  //   if (!imageUrl) {
+  //     myToast("Product must have an image.", "Danger");
+  //     return;
+  //   }
 
-    if (category === "all") {
-      myToast("Please select a category for the product.", "Danger");
-      return;
-    }
+  //   if (category === "all") {
+  //     myToast("Please select a category for the product.", "Danger");
+  //     return;
+  //   }
 
-    if (isNaN(price) || isNaN(quantity)) {
-      myToast("Please enter valid numbers for Product Price and Quantity.", "Danger");
-      return;
-    }
+  //   if (isNaN(price) || isNaN(quantity)) {
+  //     myToast("Please enter valid numbers for Product Price and Quantity.", "Danger");
+  //     return;
+  //   }
 
-    if (price <= 0 || quantity <= 0) {
-      myToast("Product Price and Quantity must be greater than zero.", "Danger");
-      return;
-    }
+  //   if (price <= 0 || quantity <= 0) {
+  //     myToast("Product Price and Quantity must be greater than zero.", "Danger");
+  //     return;
+  //   }
 
-    // Create new product object
-    let newItem = new Product(
-      name,
-      price,
-      category,
-      quantity,
-      imageUrl,
-      description,
-      generateProductId()
-    );
+  //   // Create new product object
+  //   let newItem = new Product(
+  //     name,
+  //     price,
+  //     category,
+  //     quantity,
+  //     imageUrl,
+  //     description,
+  //     generateProductId()
+  //   );
 
-    arritems = loadAllData();
 
-    // ADD or UPDATE
-    if (editingIndex === -1) {
-      arritems.push(newItem);
-      alert("Product added successfully!");
-    } else {
-      arritems[editingIndex] = newItem;
-      alert("Product updated successfully!");
-      editingIndex = -1;
-    }
+  //   // ADD or UPDATE
+  //   if (editingIndex === -1) {
+  //     arritems.push(newItem);
+  //     alert("Product added successfully!");
+  //   } else {
+  //     arritems[editingIndex] = newItem;
+  //     alert("Product updated successfully!");
+  //     editingIndex = -1;
+  //   }
 
-    saveItems();
-    displayItems();
-    clearItemForm();
-  }
+  //   saveItems();
+  //   displayItems();
+  //   clearItemForm();
+  // }
 
   // SAVE PRODUCTS to localStorage
-  function saveItems() {
-    localStorage.setItem("products", JSON.stringify(arritems));
-  }
+  // function saveItems() {
+  //   localStorage.setItem("products", JSON.stringify(arritems));
+  // }
 
   // CLEAR FORM INPUTS
   function clearItemForm() {
@@ -301,25 +308,62 @@ $(document).ready(function () {
     });
   }
 
-  declaredTransaction();
-
+  // declaredTransaction();
   // OPEN CLEAR STORAGE MODAL
   $(document).on("click", "#clearStorage", () => {
     $("#myModal").fadeIn();
   });
 
+  window.deleteProduct = function(id, productName) {
+    tempId = id;
+    $("#itemSelected").html(productName);
+    $("#deleteItemModal").fadeIn();
+  }
+
+  $(document).on("click", ".close, #deleteItemCancel", () => {
+    $("#deleteItemModal").fadeOut();
+  })
+
+
+
+  $(document).on("click", "#deleteItemConfirm", async () => {
+      try {
+        const res = await fetch(`adminProductdb.php?id=${tempId}`, {
+          method: "DELETE"
+        });
+
+        if (!res.ok) {
+            console.log("something went wrong");
+            return;
+        }
+        displayItems();
+        $("#deleteItemModal").fadeOut();
+        myToast("Item Successfully Deleted", "Success");
+      } catch (error) { 
+        console.log(error);
+      }
+  })
+
   // CLOSE MODAL
   $(document).on("click", ".close, #modalCancel", () => {
+    
     $("#myModal").fadeOut();
   });
 
   // CONFIRM CLEAR STORAGE
-  $("#modalConfirm").click(function () {
-    localStorage.setItem("products", JSON.stringify(" "));
-
+  $("#modalConfirm").click(async function () {
     $("#myModal").fadeOut();
-    myToast("Storage cleared!", "Success");
-    $("#itemContainer").html(" ");
+    const res = await fetch('adminProductdb.php', {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      console.error("Failed to clear storage:", res.statusText);
+      return;
+    }
+      displayItems();
+      myToast("Storage cleared!", "Success");
+
   });
 
 });

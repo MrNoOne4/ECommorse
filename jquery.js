@@ -1,6 +1,32 @@
 // Initialize jQuery when the DOM is fully loaded
 $(document).ready(() => {
   let toggle = true;
+  var faEyeToggle = false;
+  var faEyeToggleSignUp = false;
+  var faEyeToggleConfirmSignUp = false;
+
+function resetToggle() {
+  faEyeToggleConfirmSignUp = false;
+  faEyeToggleSignUp = false;
+  faEyeToggle = false;
+
+  $("#faEyePassword")
+    .removeClass("fa-eye-slash")
+    .addClass("fa-eye");
+  $("#passwordInput").attr("type", "password");
+
+  $("#signUpPassword")
+    .removeClass("fa-eye-slash")
+    .addClass("fa-eye");
+  $("#passwordSignUp").attr("type", "password");
+
+  $("#signUpConfirmPassword")
+    .removeClass("fa-eye-slash")
+    .addClass("fa-eye");
+  $("#confirmPassword").attr("type", "password");
+}
+
+
 
   // Initial setup: Hide cart summary and modal container
   $("#cartSummary").css("z-index", "-1");
@@ -41,6 +67,7 @@ $(document).ready(() => {
   // Display login account form
   $(document).on("click", "#login", () => {
     $("#loginAccount").addClass("-translate-y-1/2");
+    resetToggle()
     resetForm();
   });
 
@@ -50,7 +77,9 @@ $(document).ready(() => {
     $("#loginForm").addClass("-translate-y-[200%]");
     $(".formContainer").css("z-index", "-1");
     resetForm();
+    resetToggle()
   });
+
 
   // Show login form and hide sign-up form
   $(document).on("click", "#showLoginForm", () => {
@@ -58,6 +87,7 @@ $(document).ready(() => {
     $("#loginForm").addClass("-translate-y-1/2");
     $(".formContainer").css("z-index", "999");
     resetForm();
+    resetToggle()
   });
 
   // Show sign-up form and hide login form
@@ -67,6 +97,7 @@ $(document).ready(() => {
     $("#signUpForm").removeClass("-translate-y-[200%]");
     $("#signUpForm").addClass("-translate-y-1/2");
     resetForm();
+    resetToggle()
   });
 
   // Switch from sign-up back to login form
@@ -76,6 +107,7 @@ $(document).ready(() => {
     $("#loginForm").removeClass("-translate-y-[200%]");
     $("#loginForm").addClass("-translate-y-1/2");
     resetForm();
+    resetToggle()
   });
 
   // Close sign-up form
@@ -84,6 +116,7 @@ $(document).ready(() => {
     $("#signUpForm").addClass("-translate-y-[200%]");
     $(".formContainer").css("z-index", "-1");
     resetForm();
+    resetToggle()
   });
 
   // Reset all input fields in login and sign-up forms
@@ -365,4 +398,42 @@ $(document).ready(() => {
   $(document).on("click", "#cancelBtn, #closeModalBtn", function () {
     $("#confirmationInputModal").fadeOut();
   });
+
+
+// Login password toggle
+$("#faEyePassword").on("click", function (e) {
+  faEyeToggle = !faEyeToggle;
+
+  $(this)
+    .removeClass(faEyeToggle ? "fa-eye" : "fa-eye-slash")
+    .addClass(faEyeToggle ? "fa-eye-slash" : "fa-eye");
+
+  $("#passwordInput").attr("type", faEyeToggle ? "text" : "password");
+});
+
+
+// Sign up password toggle
+$("#signUpPassword").on("click", function (e) {
+  faEyeToggleSignUp = !faEyeToggleSignUp;
+
+  $(this)
+    .removeClass(faEyeToggleSignUp ? "fa-eye" : "fa-eye-slash")
+    .addClass(faEyeToggleSignUp ? "fa-eye-slash" : "fa-eye");
+
+  $("#passwordSignUp").attr("type", faEyeToggleSignUp ? "text" : "password");
+});
+
+
+// Confirm password toggle
+$("#signUpConfirmPassword").on("click", function (e) {
+  faEyeToggleConfirmSignUp = !faEyeToggleConfirmSignUp;
+
+  $(this)
+    .removeClass(faEyeToggleConfirmSignUp ? "fa-eye" : "fa-eye-slash")
+    .addClass(faEyeToggleConfirmSignUp ? "fa-eye-slash" : "fa-eye");
+
+  $("#confirmPassword").attr("type", faEyeToggleConfirmSignUp ? "text" : "password");
+});
+
+
 });

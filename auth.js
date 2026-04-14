@@ -1,3 +1,6 @@
+
+
+
 // Hide one or more form containers by moving them out of view
 function hideForms(...formIds) {
   // Select all elements that have the class "formContainer"
@@ -39,6 +42,9 @@ document.querySelector("#createAccountForm").addEventListener("submit", (e) => {
   const isValid = validateSignUp(e);
   if (!isValid) return;
 });
+
+
+
 
 // Search for an account in localStorage using the email
 //  function findAccountByEmail(email) {

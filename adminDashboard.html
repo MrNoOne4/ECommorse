@@ -1,153 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Admin Dashboard - E-Shopping App</title>
-        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-        <link rel="stylesheet" href="style.css">
-        <script
-            src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - E-Shopping App</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      /* Snackbar animations – hard to do purely in Tailwind */
+      #snackbar.show {
+        visibility: visible !important;
+        animation: fadein 0.5s, fadeout 0.5s 2.5s;
+      }
+      @keyframes fadein {
+        from { top: 0; opacity: 0; }
+        to   { top: 30px; opacity: 1; }
+      }
+      @keyframes fadeout {
+        from { top: 30px; opacity: 1; }
+        to   { top: 0; opacity: 0; }
+      }
+    </style>
+  </head>
 
-    </head>
-    <body>
+  <body class="bg-slate-50 text-slate-800 min-h-screen overflow-x-hidden font-sans">
 
-        <section class="card">
+    <!-- CARD WRAPPER: sidebar + main -->
+    <section class="grid grid-cols-[260px_1fr] min-h-screen max-lg:grid-cols-[220px_1fr] max-md:grid-cols-1">
 
-            <!-- ASIDE NAVIGATION -->
-            <aside id="dashboardNav">
-                <h2>Admin Panel</h2>
-                <nav>
-                    <ul>
-                        <li><a href="#productsSection"
-                                id="productNav">Products</a></li>
-                        <li><a href="#transactionRecord"
-                                id="transactionNav">Transaction Record</a></li>
 
-                        <li><a id="logoutNav">Logout</a></li>
-                    </ul>
-                </nav>
-            </aside>
+      <aside
+        id="dashboardNav"
+        class="sticky top-0 h-screen bg-slate-900 text-white px-4 py-6 overflow-y-auto max-md:relative max-md:h-auto max-md:w-full"
+      >
+        <h2 class="text-2xl font-bold text-slate-200 mb-8 text-center">Admin Panel</h2>
+        <nav>
+          <ul class="list-none space-y-2">
+            <li>
+              <a href="#productsSection" id="productNav"
+                class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white">
+                Products
+              </a>
+            </li>
+            <li>
+              <a href="#cancelRecordBtn" id="cancelNav"
+                class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white">
+                Cancelation Request
+              </a>
+            </li>
+            <li>
+              <a href="#transactionRecord" id="transactionNav"
+                class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white">
+                Transaction Record
+              </a>
+            </li>
+            <li>
+              <a id="logoutNav"
+                class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white cursor-pointer">
+                Logout
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
 
-            <main>
+ 
+      <main class="bg-white p-8 max-md:p-6">
 
-                <!-- PRODUCT DASHBOARD -->
-                <section id="productDashboard">
-                    <div class="header">
-                        <h2>Admin Dashboard</h2>
-                        <button id="clearStorage">Clear Storage</button>
-                    </div>
 
-                    <h3>Product Management (CRUD)</h3>
-                    <!-- PRODUCT FORM -->
-                    <form id="productForm">
-                        <input type="text" id="productName"
-                            placeholder="Product Name">
-                        <input type="number" id="productPrice"
-                            placeholder="Price">
-                        <select
-                            class="bg-bg border border-border rounded-xl py-2 px-3 text-sm text-text-blue outline-none cursor-pointer focus:border-accent font-sans"
-                            id="categoryFilter">
-                            <option value="all">All Categories</option>
-                            <option
-                                value="Electronics">Electronics</option>
-                            <option value="Foods">Foods</option>
-                            <option value="Clothes">Clothes</option>
-                            <option value="Shoes">Shoes</option>
-                            <option value="Books">Books</option>
-                        </select>
+        <section id="productDashboard">
 
-                        <input type="number" id="productQty"
-                            placeholder="Quantity">
-                        <input type="text" id="productImage"
-                            placeholder="Image URL">
+          <!-- Header -->
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-4xl font-bold text-slate-900 m-0">Admin Dashboard</h2>
+            <button
+              id="clearStorage"
+              class="px-4 py-2 bg-red-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-red-700"
+            >
+              Clear Storage
+            </button>
+          </div>
 
-                        <textarea id="productDescription"
-                            placeholder="Product Description"></textarea>
-                        <!-- Error box comes after inputs, before button -->
-                        <div id="errorBox" style="display:none;"></div>
+          <h3 class="text-2xl font-semibold text-slate-700 mt-9 mb-5">Product Management (CRUD)</h3>
 
-                        <button>Add Product</button>
+          <!-- PRODUCT FORM -->
+          <form
+            id="productForm"
+            class="grid gap-5 mb-10"
+            style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));"
+          >
+            <input
+              type="text" id="productName" placeholder="Product Name"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"
+            />
+            <input
+              type="number" id="productPrice" placeholder="Price"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"
+            />
+            <select
+              id="categoryFilter"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 cursor-pointer transition-colors"
+            >
+              <option value="all">All Categories</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Foods">Foods</option>
+              <option value="Clothes">Clothes</option>
+              <option value="Shoes">Shoes</option>
+              <option value="Books">Books</option>
+            </select>
+            <input
+              type="number" id="productQty" placeholder="Quantity"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"
+            />
+            <input
+              type="text" id="productImage" placeholder="Image URL"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"
+            />
+            <textarea
+              id="productDescription" placeholder="Product Description"
+              class="col-span-full px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors min-h-[110px] resize-y"
+            ></textarea>
 
-                    </form>
+            <!-- Error Box -->
+            <div
+              id="errorBox"
+              class="col-span-full hidden bg-red-100 text-red-800 px-4 py-3 rounded-md border border-red-200 my-2"
+            ></div>
 
-                    <h3>Products</h3>
+            <button
+              type="submit"
+              class="col-span-full py-4 bg-blue-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-blue-600"
+            >
+              Add Product
+            </button>
+          </form>
 
-                    <!-- FILTER SEARCH -->
-                    <div id="searchFilter">
-                        <input type="text" id="searchInput"
-                            placeholder="Search by product name">
+          <h3 class="text-2xl font-semibold text-slate-700 mt-9 mb-5">Products</h3>
 
-                        <select id="filterSelect">
-                            <option value>All</option>
-                            <option value="Low">Below 100</option>
-                            <option value="Medium">Price 100-500</option>
-                            <option value="High">Higher than 500</option>
-                        </select>
-                    </div>
+          <div id="searchFilter" class="flex flex-wrap gap-4 mb-7 max-md:flex-col">
+            <input
+              type="text" id="searchInput" placeholder="Search by product name"
+              class="px-4 py-3 border border-gray-300 rounded-md text-base min-w-[220px] flex-1 max-md:min-w-full outline-none focus:border-blue-400 transition-colors"
+            />
+            <select
+              id="filterSelect"
+              class="px-4 py-3 border border-gray-300 rounded-md text-base min-w-[220px] flex-1 max-md:min-w-full outline-none focus:border-blue-400 cursor-pointer transition-colors"
+            >
+              <option value="">All</option>
+              <option value="Low">Below 100</option>
+              <option value="Medium">Price 100-500</option>
+              <option value="High">Higher than 500</option>
+            </select>
+          </div>
 
-                    <!-- CARD CONTAINER -->
-                    <div id="itemContainer">
+          <div
+            id="itemContainer"
+            class="grid gap-6 max-md:grid-cols-1"
+            style="grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));"
+          ></div>
 
-                    </div>
-
-                </section>
-
-                <section id="transactionContainer"
-                    class="h-full w-full ">
-                    <h2>Transaction Record</h2>
-                    <div class="mx-auto max-h-screen-lg px-4 py-8 sm:px-8">
-
-                        <div
-                            class="overflow-y-hidden  border w-full bg-pink-300">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-center">
-                                    <thead>
-                                        <tr
-                                            class="bg-blue-600  text-xs font-semibold uppercase tracking-widest text-white">
-                                            <th class="px-5 py-3">Date</th>
-                                            <th class="px-5 py-3">Product
-                                                Name</th>
-                                            <th class="px-5 py-3">Product
-                                                ID</th>
-                                            <th class="px-5 py-3">Product
-                                                Quantity</th>
-                                            <th class="px-5 py-3">Product
-                                                Price</th>
-                                            <th class="px-5 py-3">Product
-                                                Total Sales</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="text-gray-500" id="tbody">
-
-                                    </tbody>
-                                </table>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </section>
-                <div id="snackbar">Some text some message..</div>
-
-                <div id="myModal" class="modal">
-                    <div class="modal-content">
-                        <span class="close">&times;</span>
-                        <h3 id="modalTitle">Are you sure you want to delete all
-                            stored data</h3>
-                        <p id="modalMessage">This action is permanent and cannot
-                            be undone.</p>
-                        <div class="modal-actions">
-                            <button id="modalConfirm">Confirm</button>
-                            <button id="modalCancel">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
         </section>
 
-        <script src="Product.js"></script>
-        <script src="admin.js"></script>
-    </body>
+
+        <section id="cancelRecordContainer" class="h-full w-full bg-red-500"></section>
+
+
+        <section id="transactionContainer" class="h-full w-full">
+          <h2 class="text-4xl font-bold text-slate-900 mb-6">Transaction Record</h2>
+          <div class="mx-auto max-h-screen px-4 py-8 sm:px-8">
+            <div class="overflow-y-hidden border w-full">
+              <div class="overflow-x-auto">
+                <table class="w-full text-center">
+                  <thead>
+                    <tr class="bg-blue-600 text-xs font-semibold uppercase tracking-widest text-white">
+                      <th class="px-5 py-3">Date</th>
+                      <th class="px-5 py-3">Product Name</th>
+                      <th class="px-5 py-3">Product ID</th>
+                      <th class="px-5 py-3">Product Quantity</th>
+                      <th class="px-5 py-3">Product Price</th>
+                      <th class="px-5 py-3">Product Total Sales</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-gray-500" id="tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <div
+          id="snackbar"
+          class="invisible min-w-[250px] -ml-[125px] bg-gray-800 text-white text-center rounded px-4 py-4 fixed z-10 left-1/2 top-[30px] text-lg"
+        >
+          Some text some message..
+        </div>
+
+
+        <div id="myModal" class="hidden fixed z-[1000] inset-0 bg-black/50 flex items-center justify-center ">
+          <div class="bg-white rounded-lg p-6 w-[90%] max-w-sm text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <span class="close absolute -top-1 right-3 text-2xl font-bold cursor-pointer">&times;</span>
+            <h3 class="text-xl font-semibold text-slate-900 " id="modalTitle">
+              Are you sure you want to delete all stored data
+            </h3>
+            <p class="text-slate-700 mb-6" id="modalMessage">
+              This action is permanent and cannot be undone.
+            </p>
+            <div class="flex justify-around">
+              <button id="modalConfirm" class="px-5 py-3 bg-blue-500 text-white rounded-md font-medium border-none cursor-pointer">
+                Confirm
+              </button>
+              <button id="modalCancel" class="px-5 py-3 bg-red-500 text-white rounded-md font-medium border-none cursor-pointer">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="deleteItemModal" class="hidden fixed z-[1000] inset-0 bg-black/50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-6 w-[90%] max-w-sm text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <span class="close absolute -top-1 right-3 text-2xl font-bold cursor-pointer">&times;</span>
+                
+                <h3 class="text-xl font-semibold text-slate-900" id="deleteItemTitle">
+                Delete this item? <span id="itemSelected"><span>
+                </h3>
+                
+                <p class="text-slate-700 mb-6" id="deleteItemMessage">
+                This action cannot be undone.
+                </p>
+                
+                <div class="flex justify-around">
+                <button id="deleteItemConfirm" class="px-5 py-3 bg-blue-500 text-white rounded-md font-medium border-none cursor-pointer">
+                    Confirm
+                </button>
+                
+                <button id="deleteItemCancel" class="px-5 py-3 bg-red-500 text-white rounded-md font-medium border-none cursor-pointer">
+                    Cancel
+                </button>
+                </div>
+            </div>
+        </div>
+
+      </main>
+    </section>
+
+    <script src="Product.js"></script>
+    <script src="admin.js"></script>
+  </body>
 </html>
