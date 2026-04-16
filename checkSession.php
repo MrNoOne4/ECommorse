@@ -1,13 +1,12 @@
 <?php
 session_start();
-session_destroy();
+header("Content-Type: application/json");
 header("Cache-Control: no-store, no-cache, must-revalidate"); 
 header("Pragma: no-cache"); 
 header("Expires: 0");
-
-header('Content-Type: application/json');
-
 echo json_encode([
-    "success" => true
-]);
-exit;
+    "loggedIn" => isset($_SESSION["user"]),
+    "user" => $_SESSION["user"] ?? null
+])
+
+?>

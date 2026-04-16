@@ -1,14 +1,14 @@
 
-
 "use strict";
+
+
 let products = [];
 // Retrieve login status from localStorage (defaults to false if not found)
-let isLogin = JSON.parse(localStorage.getItem("login")) || false;
 
 // Handles cart button click - navigates to cart if logged in, otherwise shows login form
-function cartBtn() {
-  isLogin = JSON.parse(localStorage.getItem("login")) || false;
-  if (isLogin) {
+async function cartBtn() {
+  let isLogin = await checkUserSessions();
+  if (isLogin.loggedIn) {
     navigate(1);
     return;
   }
@@ -16,14 +16,17 @@ function cartBtn() {
 }
 
 // Sets up click event listeners for navigation menu items
-function navigation() {
+async function navigation() {
   let listItems = document.querySelectorAll("li");
+
 
   // Loop through the items using a basic for loop
   for (let i = 0; i < listItems.length; i++) {
-    listItems[i].addEventListener("click", function () {
+    
+    listItems[i].addEventListener("click", async function () {
+      let isLogin = await checkUserSessions();
       // If user is logged in, hide other pages and show the selected one
-      if (isLogin) {
+      if (isLogin.loggedIn) {
         hidePages(i); // use index from the loop
         // If cart or transaction pages are clicked, render the cart
         if (i === 1 || i === 2) {
@@ -97,7 +100,6 @@ async function fetchProducts() {
     console.log(error);
   }
 }
-
 
 
 
@@ -646,8 +648,6 @@ async function applyFilters() {
   }
 
   const products = await res.json();
-
-  console.log(products);
   displayProducts(products);
 }
 
@@ -665,7 +665,14 @@ document.getElementById("categoryFilter").addEventListener("change", (e) => {
 
 
 
+async function checkUserSessions() {
+  const res = await fetch('checkSession.php', {
+    credentials: "include"
+  })
+  const data = await res.json();
 
+  return data;
+}
 
 
 
@@ -680,12 +687,13 @@ async function displayProducts(products) {
     cardContainer.innerHTML = "";
 
     // Check login status from localStorage
-    isLogin = JSON.parse(localStorage.getItem("login")) || false;
+    
 
     // Loop through filtered products
     for (let i = 0; i < products.length; i++) {
       let e = products[i];
-
+      let isLogin = await checkUserSessions();
+      
       // Generate 5 star icons (static UI rating)
       let stars = "";
       for (let j = 0; j < 5; j++) {
@@ -729,7 +737,7 @@ async function displayProducts(products) {
             <button
               type="button"
               class="addToCartBtn inline-flex items-center gap-1.5 cursor-pointer bg-black text-white font-medium text-sm px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-              onclick="${isLogin ? `addToCart(${i})` : `showForms()`}"
+              onclick="${isLogin.loggedIn ? `addToCart(${i})` : `showForms()`}"
               ${e.stock <= 0 ? "disabled" : ""}
             >
               <!-- Cart Icon -->
@@ -789,9 +797,16 @@ function toast(message, status, element) {
   }
 }
 
+
 // ── Initial Page Setup ────────────────────────────────────────────────────────
 // Update authentication UI buttons based on login status
-updateAuthButtons();
+// (async () => {
+//   await updateAuthButtons();
+// } )();
+(async () => {
+  await updateAuthButtons();
+  await initializedProfile();
+})();
 
 loadProducts();
 // Update cart count in header

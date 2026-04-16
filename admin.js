@@ -1,36 +1,55 @@
 // Get products and accounts from localStorage (or empty array if none)
 let arritems = []
 let tempId = "";
-// let arrUser = JSON.parse(localStorage.getItem("accounts")) || [];
+let currentEditId = -1;
 
 // Used to track if user is editing an existing product
 let editingIndex = -1;
 
+// Expose modal functions globally (needed for onclick= in HTML)
+const overlay = document.querySelector(".overlay");
+
+window.closeModal = function () {
+  overlay.classList.remove("active");
+}
+
+window.openModal = function () {
+  overlay.classList.add("active");
+}
+
 // Runs when the page is fully loaded
-$(document).ready(function () {
+$(document).ready(async function () {
 
   // Display all products on load
   displayItems();
+
   // Logout button
-  $("#logoutNav").click(function () {
+  $("#logoutNav").click(async function () {
     if (confirm("Do you want to log out?")) {
-      return (window.location.href = "index.html#");
+      const res = await fetch('logout.php');
+      const data = await res.json();
+
+      if (!res.ok) {
+        myToast("Logout unsuccessful!", "Danger");
+        return;
+      }
+
+      return (window.location.href = "index.html");
     }
   });
 
   function hideContainers() {
-     $("#transactionContainer").hide();
-     $("#cancelRecordContainer").hide();
+    $("#transactionContainer").hide();
+    $("#cancelRecordContainer").hide();
   }
 
-   hideContainers();
+  hideContainers();
 
   // NAVIGATION (switch between product and transaction views)
   $("#productNav").click(function () {
     $("#productDashboard").show();
     $("#transactionContainer").hide();
-     $("#cancelRecordContainer").hide();
-
+    $("#cancelRecordContainer").hide();
   });
 
   $("#transactionNav").click(function () {
@@ -39,15 +58,20 @@ $(document).ready(function () {
     $("#cancelRecordContainer").hide();
   });
 
-  $(document).on("click", "#cancelNav", function() {
+  $(document).on("click", "#cancelNav", function () {
     $("#productDashboard").hide();
     $("#transactionContainer").hide();
     $("#cancelRecordContainer").show();
   });
 
-  // PRODUCT FORM submission
+  // PRODUCT FORM submission (Add new product)
   $("#productForm").submit(function (e) {
     productFormSubmit(e);
+  });
+
+  // UPDATE FORM submission (Edit existing product)
+  $("#productUpdateForm").submit(function (e) {
+    productUpdateFormSubmit(e);
   });
 
   // SEARCH (filters products while typing)
@@ -60,39 +84,28 @@ $(document).ready(function () {
     displayItems();
   });
 
-  // EDIT BUTTON (populate form with selected product)
-  // $(document).on("click", ".editBtn", function () {
-  //   let index = $(this).data("index");
-  //   let item = arritems[index];
+  // EDIT PRODUCT — fetch data then open modal
+  window.editProduct = async function (id) {
+    currentEditId = id;
+    const req = await fetch(`adminProductdb.php?id=${encodeURIComponent(id)}`, {
+      method: "GET"
+    });
 
-  //   // Fill form fields with product data
-  //   $("#productName").val(item.name);
-  //   $("#productPrice").val(item.price);
-  //   $("#categoryFilter").val(item.category);
-  //   $("#productQty").val(item.stock);
-  //   $("#productDescription").val(item.description);
-  //   $("#productImage").val(item.img);
+    if (!req.ok) {
+      myToast("Failed to fetch product.", "Danger");
+      return;
+    }
 
-  //   // Save index to know we're editing
-  //   editingIndex = index;
-  // });
+    const result = await req.json();
 
-  // Generate a random product ID
-  // function generateProductId(length = 6) {
-  //   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  //   let id = "";
-
-  //   for (let i = 0; i < length; i++) {
-  //     const randomIndex = Math.floor(Math.random() * chars.length);
-  //     id += chars[randomIndex];
-  //   }
-
-  //   return id;
-  // }
-
-  // Load products from localStorage
-  function loadAllData() {
-    return JSON.parse(localStorage.getItem("products")) || [];
+    $("#productUpdateName").val(result.name);
+    $("#productUpdatePrice").val(result.price);
+    $("#categoryUpdateFilter").val(result.category);
+    $("#productUpdateQty").val(result.stock);
+    $("#productUpdateDescription").val(result.description);
+    $("#productUpdateImage").val(result.img);
+   $("#images").attr("src", result.img);
+    window.openModal();
   }
 
   // Custom toast notification
@@ -100,7 +113,6 @@ $(document).ready(function () {
     var $x = $("#snackbar");
     $x.html(message);
 
-    // Change color depending on status
     if (status === "Danger") {
       $x.css("background-color", "red");
     } else {
@@ -109,36 +121,26 @@ $(document).ready(function () {
 
     $x.addClass("show");
 
-    // Hide after 3 seconds
     setTimeout(function () {
       $x.removeClass("show");
     }, 3000);
   }
 
-  // Initialize clear button state
-  
-
-
-
   function clearBtn() {
-    // Disable button if no products exist
     $("#clearStorage").prop(
       "disabled",
       Array.isArray(arritems) && arritems.length !== 0 ? false : true
     );
 
-    // Change cursor style
     $("#clearStorage").css(
       "cursor",
-      Array.isArray(arritems) && arritems.length !== 0
-        ? "pointer"
-        : "not-allowed"
+      Array.isArray(arritems) && arritems.length !== 0 ? "pointer" : "not-allowed"
     );
   }
 
   // DISPLAY PRODUCTS
   async function displayItems() {
-    $("#itemContainer").html(" ");
+    $("#itemContainer").html("");
 
     const res = await fetch(`adminProductdb.php?search=${encodeURIComponent($("#searchInput").val())}&price=${encodeURIComponent($("#filterSelect").val())}`, {
       method: "GET",
@@ -153,121 +155,124 @@ $(document).ready(function () {
     }
 
     arritems = await res.json();
-    
-
 
     if (Array.isArray(arritems) && arritems.length !== 0) {
+      $.each(arritems, function (index, item) {
 
-      // Reload latest data
-      $.each(arritems, function (index, item) {  
-
-        // Create product card
         let card = `
-            <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col hover:border-slate-300 hover:shadow-md transition-all duration-200">
-              <img src="${item.img}" alt="${item.name}" class="w-full h-36 object-contain bg-slate-50 p-3">
-              <div class="px-4 pt-3">
-                <span class="inline-block text-xs font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-800">${item.category ?? 'Product'}</span>
-              </div>
-              <div class="flex flex-col gap-1 px-4 pt-2 pb-3 flex-1">
-                <p class="text-sm font-semibold text-slate-900 m-0">${item.name}</p>
-                <p class="text-xs text-slate-500 leading-relaxed line-clamp-2 m-0">${item.description}</p>
-                <div class="flex justify-between items-center mt-2">
-                  <span class="text-base font-bold text-slate-900">₱${Number(item.price).toLocaleString()}</span>
-                  <span class="text-xs px-2 py-1 rounded-full border ${item.stock <= 5 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">Stock: ${item.stock}</span>
-                </div>
-              </div>
-              <div class="flex gap-2 px-4 pb-4">
-                <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 transition-colors border-none cursor-pointer" type="button" onclick="editProduct(${item})">Edit</button>
-                <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-red-100 text-red-800 hover:bg-red-200 transition-colors border-none cursor-pointer" type="button" onclick="deleteProduct(${item.productId}, '${item.name}')">Delete</button>
+          <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col hover:border-slate-300 hover:shadow-md transition-all duration-200">
+            <img src="${item.img}" alt="${item.name}" class="w-full h-36 object-contain bg-slate-50 p-3">
+            <div class="px-4 pt-3">
+              <span class="inline-block text-xs font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-800">${item.category ?? 'Product'}</span>
+            </div>
+            <div class="flex flex-col gap-1 px-4 pt-2 pb-3 flex-1">
+              <p class="text-sm font-semibold text-slate-900 m-0">${item.name}</p>
+              <p class="text-xs text-slate-500 leading-relaxed line-clamp-2 m-0">${item.description}</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-base font-bold text-slate-900">₱${Number(item.price).toLocaleString()}</span>
+                <span class="text-xs px-2 py-1 rounded-full border ${item.stock <= 5 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">Stock: ${item.stock}</span>
               </div>
             </div>
-            `;
-        // Add card to page
+            <div class="flex gap-2 px-4 pb-4">
+              <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 transition-colors border-none cursor-pointer" type="button" onclick="editProduct(${item.productId})">Edit</button>
+              <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-red-100 text-red-800 hover:bg-red-200 transition-colors border-none cursor-pointer" type="button" onclick="deleteProduct(${item.productId}, '${item.name}')">Delete</button>
+            </div>
+          </div>
+        `;
+
         $("#itemContainer").append(card);
       });
     }
+
     clearBtn();
   }
 
+  // Close modal when clicking outside
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      window.closeModal();
+    }
+  });
 
+  // ADD NEW PRODUCT
+  async function productFormSubmit(e) {
+    e.preventDefault();
 
+    let name = $("#productName").val().trim();
+    let price = parseFloat($("#productPrice").val());
+    let category = $("#categoryFilter").val();
+    let quantity = parseInt($("#productQty").val());
+    let description = $("#productDescription").val().trim();
+    let imageUrl = $("#productImage").val().trim();
 
-  // HANDLE FORM SUBMISSION (ADD / EDIT PRODUCT)
-  // function productFormSubmit(e) {
-  //   e.preventDefault();
+    if (name === "") { myToast("Product Name must not be empty.", "Danger"); return; }
+    if (description === "") { myToast("Product Description must not be empty.", "Danger"); return; }
+    if (!imageUrl) { myToast("Product must have an image.", "Danger"); return; }
+    if (category === "all") { myToast("Please select a category.", "Danger"); return; }
+    if (isNaN(price) || isNaN(quantity)) { myToast("Please enter valid numbers for Price and Quantity.", "Danger"); return; }
+    if (price <= 0 || quantity <= 0) { myToast("Price and Quantity must be greater than zero.", "Danger"); return; }
 
-  //   // Get input values
-  //   let name = $("#productName").val().trim();
-  //   let price = parseFloat($("#productPrice").val());
-  //   let category = $("#categoryFilter").val();
-  //   let quantity = parseInt($("#productQty").val());
-  //   let description = $("#productDescription").val().trim();
-  //   let imageUrl = $("#productImage").val().trim();
+    try {
+      const res = await fetch('adminProductdb.php', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, price, category, stock: quantity, img: imageUrl, description })
+      });
 
-  //   // VALIDATION
-  //   if (name === "") {
-  //     myToast("Product Name must not be empty.", "Danger");
-  //     return;
-  //   }
+      if (!res.ok) {
+        myToast("Failed to add product.", "Danger");
+        return;
+      }
 
-  //   if (description === "") {
-  //     myToast("Product Description must not be empty.", "Danger");
-  //     return;
-  //   }
+      myToast("Product added successfully!", "Success");
+      clearItemForm();
+      displayItems();
+    } catch (err) {
+      console.error(err);
+      myToast("An error occurred.", "Danger");
+    }
+  }
 
-  //   if (!imageUrl) {
-  //     myToast("Product must have an image.", "Danger");
-  //     return;
-  //   }
+  // UPDATE EXISTING PRODUCT
+  async function productUpdateFormSubmit(e) {
+    e.preventDefault();
 
-  //   if (category === "all") {
-  //     myToast("Please select a category for the product.", "Danger");
-  //     return;
-  //   }
+    let name = $("#productUpdateName").val().trim();
+    let price = parseFloat($("#productUpdatePrice").val());
+    let category = $("#categoryUpdateFilter").val();
+    let quantity = parseInt($("#productUpdateQty").val());
+    let description = $("#productUpdateDescription").val().trim();
+    let imageUrl = $("#productUpdateImage").val().trim();
 
-  //   if (isNaN(price) || isNaN(quantity)) {
-  //     myToast("Please enter valid numbers for Product Price and Quantity.", "Danger");
-  //     return;
-  //   }
+    if (name === "") { myToast("Product Name must not be empty.", "Danger"); return; }
+    if (description === "") { myToast("Product Description must not be empty.", "Danger"); return; }
+    if (!imageUrl) { myToast("Product must have an image.", "Danger"); return; }
+    if (category === "all") { myToast("Please select a category.", "Danger"); return; }
+    if (isNaN(price) || isNaN(quantity)) { myToast("Please enter valid numbers for Price and Quantity.", "Danger"); return; }
+    if (price <= 0 || quantity <= 0) { myToast("Price and Quantity must be greater than zero.", "Danger"); return; }
 
-  //   if (price <= 0 || quantity <= 0) {
-  //     myToast("Product Price and Quantity must be greater than zero.", "Danger");
-  //     return;
-  //   }
+    try {
+      const res = await fetch(`adminProductdb.php?id=${currentEditId}`, {
+        method: 'PATCH',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, price, category, stock: quantity, img: imageUrl, description })
+      });
 
-  //   // Create new product object
-  //   let newItem = new Product(
-  //     name,
-  //     price,
-  //     category,
-  //     quantity,
-  //     imageUrl,
-  //     description,
-  //     generateProductId()
-  //   );
+      if (!res.ok) {
+        myToast("Failed to  update product.", "Danger");
+        return;
+      }
 
+      myToast("Product updated successfully!", "Success");
+      window.closeModal();
+      displayItems();
+    } catch (err) {
+      console.error(err);
+      myToast("An error occurred.", "Danger");
+    }
+  }
 
-  //   // ADD or UPDATE
-  //   if (editingIndex === -1) {
-  //     arritems.push(newItem);
-  //     alert("Product added successfully!");
-  //   } else {
-  //     arritems[editingIndex] = newItem;
-  //     alert("Product updated successfully!");
-  //     editingIndex = -1;
-  //   }
-
-  //   saveItems();
-  //   displayItems();
-  //   clearItemForm();
-  // }
-
-  // SAVE PRODUCTS to localStorage
-  // function saveItems() {
-  //   localStorage.setItem("products", JSON.stringify(arritems));
-  // }
-
-  // CLEAR FORM INPUTS
+  // CLEAR ADD FORM
   function clearItemForm() {
     $("#productName").val("");
     $("#productPrice").val("");
@@ -277,44 +282,13 @@ $(document).ready(function () {
     $("#productImage").val("");
   }
 
-  // DISPLAY TRANSACTIONS TABLE
-  function declaredTransaction() {
-    const tbody = document.getElementById("tbody");
-    var trasanction = JSON.parse(localStorage.getItem("transaction"));
-
-    console.log(trasanction);
-
-    // Loop through transactions grouped by date
-    Object.keys(trasanction).forEach((date) => {
-      trasanction[date].forEach((pro) => {
-
-        // Calculate total sales
-        const totalSales = pro.productPrice * pro.productQuantity;
-
-        // Create table row
-        const row = `
-          <tr class="text-2xl">
-            <td>${date}</td>
-            <td>${pro.productName}</td>
-            <td>${pro.productCode}</td>
-            <td>${pro.productQuantity}</td>
-            <td>₱${pro.productPrice}</td>
-            <td>₱${totalSales}</td>
-          </tr>
-        `;
-
-        tbody.innerHTML += row;
-      });
-    });
-  }
-
-  // declaredTransaction();
   // OPEN CLEAR STORAGE MODAL
   $(document).on("click", "#clearStorage", () => {
     $("#myModal").fadeIn();
   });
 
-  window.deleteProduct = function(id, productName) {
+  // DELETE PRODUCT — show confirmation modal
+  window.deleteProduct = function (id, productName) {
     tempId = id;
     $("#itemSelected").html(productName);
     $("#deleteItemModal").fadeIn();
@@ -322,37 +296,36 @@ $(document).ready(function () {
 
   $(document).on("click", ".close, #deleteItemCancel", () => {
     $("#deleteItemModal").fadeOut();
-  })
-
-
+  });
 
   $(document).on("click", "#deleteItemConfirm", async () => {
-      try {
-        const res = await fetch(`adminProductdb.php?id=${tempId}`, {
-          method: "DELETE"
-        });
+    try {
+      const res = await fetch(`adminProductdb.php?id=${tempId}`, {
+        method: "DELETE"
+      });
 
-        if (!res.ok) {
-            console.log("something went wrong");
-            return;
-        }
-        displayItems();
-        $("#deleteItemModal").fadeOut();
-        myToast("Item Successfully Deleted", "Success");
-      } catch (error) { 
-        console.log(error);
+      if (!res.ok) {
+        myToast("Failed to delete item.", "Danger");
+        return;
       }
-  })
 
-  // CLOSE MODAL
+      displayItems();
+      $("#deleteItemModal").fadeOut();
+      myToast("Item Successfully Deleted", "Success");
+    } catch (error) {
+      console.log(error);
+    }
+  });
+
+  // CLOSE CLEAR MODAL
   $(document).on("click", ".close, #modalCancel", () => {
-    
     $("#myModal").fadeOut();
   });
 
-  // CONFIRM CLEAR STORAGE
+  // CONFIRM CLEAR ALL
   $("#modalConfirm").click(async function () {
     $("#myModal").fadeOut();
+
     const res = await fetch('adminProductdb.php', {
       method: 'DELETE',
     });
@@ -361,9 +334,9 @@ $(document).ready(function () {
       console.error("Failed to clear storage:", res.statusText);
       return;
     }
-      displayItems();
-      myToast("Storage cleared!", "Success");
 
+    displayItems();
+    myToast("Storage cleared!", "Success");
   });
 
 });

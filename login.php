@@ -1,20 +1,23 @@
 <?php
+require_once "db.php";
 session_start();
 header("Content-Type: application/json");
+header("Cache-Control: no-store, no-cache, must-revalidate"); 
+header("Pragma: no-cache"); 
+header("Expires: 0");
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$conn = new mysqli("localhost", "root", "M@thew11!", "ECommorse");
+$dbInstance = new Database();
+$db = $dbInstance->getConnection();
 
-if ($conn->connect_error) {
-    echo json_encode(["error" => "Connection failed"]);
-    exit;
-}
+
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(["error" => "Invalid request method"]);
     exit;
 }
+
 
 $email = trim($data['email'] ?? '');
 $password = trim($data['password'] ?? '');
@@ -24,8 +27,8 @@ if (empty($email) || empty($password)) {
     exit;
 }
 
-$sql = "SELECT passwordHash FROM users WHERE email = ?";
-$stmt = $conn->prepare($sql);
+$sql = "SELECT email, passwordHash, role FROM users WHERE email = ?";
+$stmt = $db->prepare($sql);
 $stmt->bind_param("s", $email);
 $stmt->execute();
 
@@ -35,22 +38,24 @@ if ($row = $result->fetch_assoc()) {
 
     if (password_verify($password, $row['passwordHash'])) {
 
-        $_SESSION["user"] = [
-            "email" => $email
+        $_SESSION[$row['role']] = [
+            "email" => $row['email'],
+            "role" => $row['role']
         ];
 
         echo json_encode([
             "success" => true,
-            "message" => "Login successful"
+            "message" => "Login successful",
+            "role" => $row['role']
         ]);
+        exit;
 
     } else {
         echo json_encode(["error" => "Invalid password"]);
+        exit;
     }
 
 } else {
     echo json_encode(["error" => "User not found"]);
+    exit;
 }
-
-$conn->close();
-?>
