@@ -169,54 +169,56 @@
                                     id="initialBackground">
                                     <h1
                                         class="text-4xl text-white font-bold"
-                                        id="initial">M</h1>
+                                        id="initial"> </h1>
                                 </div>
 
                                 <div class="mt-6 flex flex-col gap-4">
 
-                                    <div
-                                        class="flex items-center justify-between">
-                                        <label
-                                            class="text-sm text-gray-600">1st
-                                            Background</label>
-                                        <input type="color" id="backgroundFirst"
-                                            class="w-10 h-10 cursor-pointer border-none" />
-                                    </div>
+                                    <form method="POST">
+                                        <div
+                                            class="flex items-center justify-between">
+                                            <label
+                                                class="text-sm text-gray-600">1st
+                                                Background</label>
+                                            <input type="color" id="backgroundFirst"
+                                                class="w-10 h-10 cursor-pointer border-none" />
+                                        </div>
 
-                                    <div
-                                        class="flex items-center justify-between">
-                                        <label
-                                            class="text-sm text-gray-600">2nd
-                                            Background</label>
-                                        <input type="color"
-                                            id="backgroundSecond"
-                                            class="w-10 h-10 cursor-pointer border-none" />
-                                    </div>
+                                        <div
+                                            class="flex items-center justify-between">
+                                            <label
+                                                class="text-sm text-gray-600">2nd
+                                                Background</label>
+                                            <input type="color"
+                                                id="backgroundSecond"
+                                                class="w-10 h-10 cursor-pointer border-none" />
+                                        </div>
 
-                                    <div
-                                        class="flex items-center justify-between">
-                                        <label
-                                            class="text-sm text-gray-600">Text
-                                            Color</label>
+                                        <div
+                                            class="flex items-center justify-between">
+                                            <label
+                                                class="text-sm text-gray-600">Text
+                                                Color</label>
 
-                                        <input type="color" id="color"
-                                            class="w-10 h-10 cursor-pointer border-none" />
-                                    </div>
+                                            <input type="color" id="color"
+                                                class="w-10 h-10 cursor-pointer border-none" />
+                                        </div>
 
-                                    <div class="flex gap-2">
-                                        <button type="button" id="deleteAccount"
-                                            class="text-white bg-gradient-to-r cursor-pointer bg-red-500 hover:bg-red-700 font-medium rounded-base text-sm px-4 py-2.5 text-center  px-8 ">Delete
-                                            Account</button>
+                                        <div class="flex gap-2">
+                                            <button type="button" id="deleteAccount"
+                                                class="text-white bg-gradient-to-r cursor-pointer bg-red-500 hover:bg-red-700 font-medium rounded-base text-sm px-4 py-2.5 text-center  px-8 ">Delete
+                                                Account</button>
 
-                                        <button type="button" id="editAccount"
-                                            class="text-white bg-blue-500 hover:bg-blue-600 cursor-pointer hover:bg-gradient-to-br focus:ring-4 focus:outline-none  font-medium rounded-base text-sm px-4 py-2.5 text-center  px-8 ">
-                                            Edit Account
-                                        </button>
-                                    </div>
+                                            <button type="button" id="editAccount"
+                                                class="text-white bg-blue-500 hover:bg-blue-600 cursor-pointer hover:bg-gradient-to-br focus:ring-4 focus:outline-none  font-medium rounded-base text-sm px-4 py-2.5 text-center  px-8 ">
+                                                Edit Account
+                                            </button>
+                                        </div>
 
-                                    <button type="button" id="saveChange"
-                                        class="text-white bg-black rounded-md px-10 mt-3 mx-auto cursor-pointer relative bottom-0 block box-border border border-transparent hover:bg-dark-strong focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Save
-                                        Changes</button>
+                                        <button type="button" id="saveChange"
+                                            class="text-white bg-black rounded-md px-10 mt-3 mx-auto cursor-pointer relative bottom-0 block box-border border border-transparent hover:bg-dark-strong focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Save
+                                            Changes</button>
+                                    </form>
 
                                 </div>
                             </div>
@@ -539,7 +541,7 @@
                             <div id="modal"
                                 class="fixed inset-0  bg-opacity-50 flex items-center justify-center block top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                                 <div
-                                    class="bg-white rounded-lg shadow-lg  p-6 relative px-10">
+                                    class="bg-white rounded-lg shadow-lg  p-6 relative ">
                                     <!-- Close button -->
                                     <button id="closeInputModalBtn"
                                         class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 cursor-pointer">&times;</button>

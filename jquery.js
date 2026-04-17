@@ -336,21 +336,7 @@ function resetToggle() {
   intitializeColors();
 
   // Save profile color changes to localStorage
-  $(document).on("click", "#saveChange", function () {
-    var token = localStorage.getItem("token");
 
-    var color1 = $("#backgroundFirst").val();
-    var color2 = $("#backgroundSecond").val();
-    var value = $("#color").val();
-    toast("Profile Successfully changes", true, "#toast-default");
-    localStorage.setItem(
-      `background_${token}`,
-      JSON.stringify(`linear-gradient(to right, ${color1}, ${color2})`),
-    );
-    localStorage.setItem(`color_${token}`, JSON.stringify(`${value}`));
-    intitializeColors();
-    $("#profileContainer").fadeOut();
-  });
 
   // Update text color preview as user changes color input
   $(document).on("input", "#color", function () {

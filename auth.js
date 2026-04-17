@@ -92,6 +92,17 @@ async function validateSignUp(e) {
   return true;
 }
 
+async function checkUserSessions() {
+  const res = await fetch('checkSession.php', {
+    credentials: "include"
+  })
+  const data = await res.json();
+
+  return data;
+}
+
+
+
 // Initialize and display the user's profile in the UI
 async function initializedProfile() {
   const session = await checkUserSessions();
@@ -100,6 +111,11 @@ async function initializedProfile() {
   const profileInitial = document.getElementById("profileInitial");
   const initialBackground = document.getElementById("initialBackground");
   const initial = document.getElementById("initial");
+ 
+  if (!profile || !profileInitial || !initialBackground || !initial) {
+    console.error("Missing DOM elements");
+    return;
+  }
 
   if (!session || !session.loggedIn) {
     profile.classList.remove("block");
@@ -108,22 +124,33 @@ async function initializedProfile() {
   }
 
   const token = session.user;
-  profile.classList.remove("hidden");
+  if (!token?.ID) {
+      console.warn("No user ID in session");
+    return;
+  }
+  const req = await fetch(`profile.php?id=${encodeURIComponent(token.ID)}`, {
+    method: "GET"
+  })
 
-  const backgroundColor = JSON.parse(localStorage.getItem(`background_${token}`)) || "#333333";
-  const textColor = JSON.parse(localStorage.getItem(`color_${token}`)) || "#ffffff";
+  const data = await req.json();
 
-  const firstChar = token[0].toUpperCase();
+  const {backgroundFirst, backgroundSecond, textColor} = data.user;
 
-  profileInitial.innerHTML = firstChar;
+  const firstChar = token.email[0].toUpperCase();
+
+
   initial.innerHTML = firstChar;
+  
+  profileInitial.innerHTML = firstChar;
+
 
   initial.style.color = textColor;
-  initialBackground.style.background = backgroundColor;
-  profileInitial.style.background = backgroundColor;
+  initialBackground.style.background = backgroundFirst;
+  profileInitial.style.background = backgroundFirst;
   profileInitial.style.color = textColor;
 
-  
+  profile.classList.remove("hidden");
+  profile.classList.add("block");
 }
 
 // Validate login credentials
@@ -160,8 +187,11 @@ async function validateLogin(e) {
 
   if (result.role === "admin") {
     window.location.href = "adminDashboard.php";
-    return true;
+    return;
   }
+
+    window.location.href = "index.html";
+
 
   const product = await loadProducts();
   displayProducts(product);
@@ -196,7 +226,6 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
   await initializedProfile();
 
   resetCheckOutForm();
-  resetForm();
 });
 
 // Show or hide login/logout buttons depending on login status
@@ -210,11 +239,7 @@ async function updateAuthButtons() {
   btn.classList.toggle("hidden", isLogin.loggedIn);
 }
 
-// Run once when the page loads
-(async () => {
-  await updateAuthButtons();
-  await initializedProfile();
-})();
+
 
 // Handle login form submission
 document.querySelector("#loginForm form").addEventListener("submit", async (e) => {
@@ -226,12 +251,25 @@ document.querySelector("#loginForm form").addEventListener("submit", async (e) =
 // Delete the currently logged-in account
 const confirmDeletion = async () => {
   const session = await checkUserSessions();
-  const token = session.user;
+  const req = await fetch(`profile.php`, {
+    method: "DELETE",
 
-  localStorage.setItem(`background_${token}`, JSON.stringify(""));
-  localStorage.setItem(`color_${token}`, JSON.stringify(""));
-  localStorage.setItem(`transact_${token}`, JSON.stringify(""));
-  localStorage.setItem(`cart_${token}`, JSON.stringify(""));
+    headers: {
+        'Content-Type': 'application/json'
+      },
+
+      body: JSON.stringify({
+        id: session.user.ID
+      })
+  });
+
+  if (!req.ok) {
+    console.log("something went wrong");
+    return;
+  }
+
+
+  const result = await req.json();
 
   await initializedProfile();
   await updateAuthButtons();
@@ -255,44 +293,120 @@ document.querySelector("#deleteConfirm").addEventListener("click", async () => {
   await confirmDeletion();
 });
 
-// Update the logged-in user's email
-document.querySelector("#updateBtn").addEventListener("click", async function () {
-  const newEmail = document.querySelector("#newEmail").value;
+
+document.addEventListener("click", async function (e) {
   const session = await checkUserSessions();
   const token = session.user;
 
-  if (!newEmail) {
-    toast("Please enter a valid email.", false, "#toast-default");
+    if (!token.ID) {
+      toast("user are not authenticated.", false, "#toast-default");
+      return;
+  }
+
+  const btn = e.target.closest("#saveChange");
+  if (!btn) return;
+
+
+  const color1 = document.querySelector("#backgroundFirst")?.value;
+  const color2 = document.querySelector("#backgroundSecond")?.value;
+  const value = document.querySelector("#color")?.value;
+
+  toast("Profile Successfully changes", true, "#toast-default");
+
+  // NOTE: You need to define what "id" should be
+  // Example: const id = token OR another stored value
+ 
+    console.log(token);
+
+
+  const req = await fetch(`profile.php?action=updateColor`, {
+    method: "PATCH",
+
+    headers: {
+        'Content-Type': 'application/json'
+      },
+
+      body: JSON.stringify({
+        backgroundFirst: color1,
+        backgroundSecond: color2,
+        color: value
+      })
+  });
+
+  const res = await req.json();
+
+  if (!req.ok) {
+    console.log("something went wrong");
     return;
   }
 
-  const tempBackground = JSON.parse(localStorage.getItem(`background_${token}`));
-  const tempColor = JSON.parse(localStorage.getItem(`color_${token}`));
-  const tempTransaction = JSON.parse(localStorage.getItem(`transact_${token}`));
-  const tempCart = JSON.parse(localStorage.getItem(`cart_${token}`));
 
-  localStorage.setItem(`background_${token}`, JSON.stringify(" "));
-  localStorage.setItem(`color_${token}`, JSON.stringify(" "));
-  localStorage.setItem(`transact_${token}`, JSON.stringify(" "));
-  localStorage.setItem(`cart_${token}`, JSON.stringify(" "));
+  // localStorage equivalents (unchanged logic, just vanilla JS)
+  // localStorage.setItem(
+  //   `background_${token}`,
+  //   JSON.stringify(`linear-gradient(to right, ${color1}, ${color2})`)
+  // );
+  // localStorage.setItem(`color_${token}`, JSON.stringify(value));
 
-  localStorage.setItem(`color_${newEmail}`, JSON.stringify(tempColor));
-  localStorage.setItem(`transact_${newEmail}`, JSON.stringify(tempTransaction));
-  localStorage.setItem(`cart_${newEmail}`, JSON.stringify(tempCart));
-  localStorage.setItem(`background_${newEmail}`, JSON.stringify(tempBackground));
-
+  // intitializeColors();
   await initializedProfile();
   await updateAuthButtons();
-  resetCheckOutForm();
+  
   const product = await loadProducts();
   displayProducts(product);
   updateCartCount();
   renderTransaction();
 
-  document.querySelector("#newEmail").value = "";
-  document.getElementById("confirmationInputModal").style.display = "none";
-  document.getElementById("inputModalContainer").style.display = "none";
-  document.getElementById("profileContainer").style.display = "none";
+  const profileContainer = document.querySelector("#profileContainer");
+  if (profileContainer) {
+    profileContainer.style.transition = "opacity 0.3s ease";
+    profileContainer.style.opacity = "0";
 
-  toast("Your email has been successfully updated!", true, "#toast-default");
+    setTimeout(() => {
+      profileContainer.style.display = "none";
+    }, 300);
+  }
+
+});
+
+// Update the logged-in user's email
+document.querySelector("#updateBtn").addEventListener("click", async () => {
+  const newEmail = document.querySelector("#newEmail").value;
+
+  const sessionRes = await fetch("checkSession.php", { credentials: "include" });
+  const session = await sessionRes.json();
+  const user = session.user;
+
+  if (!newEmail) {
+    toast("Please enter email", false, "#toast-default");
+    return;
+  }
+
+  if (!user?.ID) {
+    toast("Not authenticated", false, "#toast-default");
+    return;
+  }
+
+  const res = await fetch(
+    `profile.php?action=updateEmail`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email: newEmail })
+    }
+  );
+
+  const data = await res.json();
+
+  if (!res.ok || data.error) {
+    toast(data.error || "Update failed", false, "#toast-default");
+    return;
+  }
+
+  toast("Email updated!", true, "#toast-default");
+
+  await initializedProfile(); // reload UI from session
+
+  document.querySelector("#newEmail").value = "";
 });

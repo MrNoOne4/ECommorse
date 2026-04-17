@@ -82,6 +82,16 @@ hidePages(0);
 
 // ── Products ──────────────────────────────────────────────────────────────
 // Retrieve products from localStorage
+async function updateAuthButtons() {
+  let isLogin = await checkUserSessions();
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  const btn = document.getElementById("showLoginForm");
+
+  logoutBtn.classList.toggle("hidden", !isLogin.loggedIn);
+  btn.classList.toggle("hidden", isLogin.loggedIn);
+}
+
 
 async function fetchProducts() {
   try {
@@ -330,6 +340,48 @@ function removeCart(productCode) {
   renderCart();
   // displayProducts();
 }
+async function initializedProfile() {
+  const session = await checkUserSessions();
+
+  const profile = document.getElementById("profile");
+  const profileInitial = document.getElementById("profileInitial");
+  const initialBackground = document.getElementById("initialBackground");
+  const initial = document.getElementById("initial");
+
+  if (!profile || !profileInitial || !initialBackground || !initial) {
+    console.error("Missing DOM elements");
+    return;
+  }
+
+  if (!session || !session.loggedIn) {
+    profile.classList.remove("block");
+    profile.classList.add("hidden");
+    return;
+  }
+
+  const req = await fetch(`profile.php`, {
+    method: "GET",
+    credentials: "include"
+  });
+
+  const data = await req.json();
+
+  const { backgroundFirst, backgroundSecond, textColor, email } = data.user;
+
+  const firstChar = email[0].toUpperCase();
+
+  initial.innerHTML = firstChar;
+  profileInitial.innerHTML = firstChar;
+
+  initial.style.color = textColor;
+  initialBackground.style.background = backgroundFirst;
+  profileInitial.style.background = backgroundFirst;
+  profileInitial.style.color = textColor;
+
+  profile.classList.remove("hidden");
+  profile.classList.add("block");
+}
+
 
 // Global function to change product quantity in cart (called via inline onclick)
 window.changeQty = (productCode, delta, action) => {

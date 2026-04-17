@@ -252,7 +252,7 @@ $(document).ready(async function () {
     if (price <= 0 || quantity <= 0) { myToast("Price and Quantity must be greater than zero.", "Danger"); return; }
 
     try {
-      const res = await fetch(`adminProductdb.php?id=${currentEditId}`, {
+      const res = await fetch(`adminProductdb.php?id=${encodeURIComponent(currentEditId)}`, {
         method: 'PATCH',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, price, category, stock: quantity, img: imageUrl, description })

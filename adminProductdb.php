@@ -75,9 +75,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
 
-    case 'GET':
 
-            case 'GET':
+    case 'GET':
         $id = $_GET['id'] ?? null;
 
         if (!empty($id)) {
@@ -153,11 +152,6 @@ switch ($method) {
     case 'POST':
 
         $data = json_decode(file_get_contents("php://input"), true);
-        $errors = validateProduct($data, false);
-
-        if (!empty($errors)) {
-            jsonResponse(["errors" => $errors], 400);
-        }
 
         $name = trim($data['name'] ?? '');
         $price = (float)($data['price'] ?? 0);
@@ -172,7 +166,7 @@ switch ($method) {
         ");
 
         $stmt->bind_param(
-            "sdisss",
+            "sdssss",
             $name,
             $price,
             $category,
@@ -196,6 +190,7 @@ switch ($method) {
     case 'PATCH':
 
         $id = $_GET['id'] ?? null;
+
         if (empty($id)) {
             jsonResponse(["error" => "Missing product ID"], 400);
         }
@@ -212,11 +207,6 @@ switch ($method) {
         }
 
         $data = json_decode(file_get_contents("php://input"), true);
-        $errors = validateProduct($data, true);
-
-        if (!empty($errors)) {
-            jsonResponse(["errors" => $errors], 400);
-        }
 
         $name = $data['name'] ?? $current['name'];
         $price = (float)($data['price'] ?? $current['price']);

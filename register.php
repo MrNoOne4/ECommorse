@@ -1,54 +1,73 @@
 <?php
 session_start();
 header("Content-Type: application/json");
-header("Cache-Control: no-store, no-cache, must-revalidate"); 
-header("Pragma: no-cache"); 
-header("Expires: 0");
+header("Cache-Control: no-store, no-cache, must-revalidate");
 
 $data = json_decode(file_get_contents("php://input"), true);
 
 $conn = new mysqli("localhost", "root", "M@thew11!", "ECommorse");
 
 if ($conn->connect_error) {
+    http_response_code(500);
     die(json_encode(["error" => "Connection failed"]));
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
     die(json_encode(["error" => "Invalid request method"]));
 }
 
 $email = trim($data['email'] ?? '');
 $password = trim($data['password'] ?? '');
 
-if (empty($email) || empty($password)) {
-    die(json_encode(["error" => "Email and password are required"]));
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    http_response_code(400);
+    die(json_encode(["error" => "Invalid email format"]));
 }
 
 if (strlen($password) < 6) {
+    http_response_code(400);
     die(json_encode(["error" => "Password too weak"]));
-}
-
-$check = $conn->prepare("SELECT id FROM users WHERE email = ?");
-$check->bind_param("s", $email);
-$check->execute();
-$res = $check->get_result();
-
-if ($res->num_rows > 0) {
-    echo json_encode(["error" => "Email already exists"]);
-    exit;
 }
 
 $hashPassword = password_hash($password, PASSWORD_DEFAULT);
 
-$sql = "INSERT INTO users (email, passwordHash, role) VALUES (?, ?, 'user')";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ss", $email, $hashPassword);
+$conn->begin_transaction();
 
-if ($stmt->execute()) {
+try {
+    // Insert user
+    $stmt = $conn->prepare(
+        "INSERT INTO users (email, passwordHash, role) VALUES (?, ?, 'user')"
+    );
+    $stmt->bind_param("ss", $email, $hashPassword);
+
+    if (!$stmt->execute()) {
+        throw new Exception("User insert failed (maybe duplicate email)");
+    }
+
+    $userId = $conn->insert_id;
+
+    // Insert profile
+    $stmtt = $conn->prepare(
+        "INSERT INTO customProfile (userId, backgroundFirst, backgroundSecond, textColor)
+         VALUES (?, ?, ?, ?)"
+    );
+
+    $bg1 = "#333333";
+    $bg2 = "#212121";
+    $text = "#FFFFFF";
+
+    $stmtt->bind_param("isss", $userId, $bg1, $bg2, $text);
+
+    if (!$stmtt->execute()) {
+        throw new Exception("Profile creation failed");
+    }
+
+    $conn->commit();
 
     session_regenerate_id(true);
-
     $_SESSION["user"] = [
+        "ID" => $userId,
         "email" => $email,
         "role" => "user"
     ];
@@ -57,9 +76,13 @@ if ($stmt->execute()) {
         "success" => true,
         "message" => "User registered successfully"
     ]);
-} else {
-    echo json_encode(["error" => "Registration failed"]);
+
+} catch (Exception $e) {
+    $conn->rollback();
+
+    http_response_code(400);
+    echo json_encode([
+        "error" => $e->getMessage()
+    ]);
 }
-
-
 ?>
