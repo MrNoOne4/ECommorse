@@ -306,29 +306,24 @@ function resetToggle() {
   });
 
   // Load and display user's saved color preferences
-  function intitializeColors() {
-    var token = localStorage.getItem("token");
+  async function intitializeColors() {
+    const session = await checkUserSessions();
+    const userId = session.user.ID;
+    console.log(session);
+    const res = await fetch("getProfile.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId })
+    });
 
-    var backgroundColor =
-      JSON.parse(localStorage.getItem(`background_${token}`)) ||
-      "bg-gradient-to-r from-purple-500 to-blue-500";
-    var textColor = JSON.parse(localStorage.getItem(`color_${token}`));
+    const data = await res.json();
 
-    // Parse gradient colors from stored string
-    const colorsRaw = backgroundColor
-      .replace("linear-gradient(", "")
-      .replace(")", "")
-      .split(",")
-      .slice(1);
+    const backgroundFirst = data.backgroundFirst || "#333333";
+    const backgroundSecond = data.backgroundSecond || "#212121";
+    const textColor = data.textColor || "#ffffff";
 
-    const colors = [];
-    for (let i = 0; i < colorsRaw.length; i++) {
-      colors.push(colorsRaw[i].trim());
-    }
-
-    // Set input values to current colors
-    $("#backgroundFirst").val(`${colors[0]}`);
-    $("#backgroundSecond").val(colors[1]);
+    $("#backgroundFirst").val(backgroundFirst);
+    $("#backgroundSecond").val(backgroundSecond);
     $("#color").val(textColor);
   }
 

@@ -11,38 +11,31 @@ $sql = "SELECT * FROM products WHERE 1=1";
 $params = [];
 $types = "";
 
-// Get inputs
-$search = $_GET['search'] ?? '';
-$price = $_GET['price'] ?? '';
+$search   = $_GET['search']   ?? '';
+$category = $_GET['category'] ?? '';
 
-// Build query safely
 if (!empty($search)) {
     $sql .= " AND name LIKE ?";
-    $params[] = "%$search%";
-    $types .= "s";
+    $params[] = "%" . $search . "%";
+    $types   .= "s";
 }
 
-if (!empty($price)) {
-    $sql .= " AND price = ?";
-    $params[] = $price;
-    $types .= "d"; // or "i" depending on your column type
+if (!empty($category) && $category !== 'all') {
+    $sql .= " AND category = ?";
+    $params[] = $category;
+    $types   .= "s";
 }
 
-// Prepare statement
 $stmt = $conn->prepare($sql);
 
-// Bind if there are parameters
 if (!empty($params)) {
     $stmt->bind_param($types, ...$params);
 }
 
-// Execute
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Fetch results
 $products = [];
-
 while ($row = $result->fetch_assoc()) {
     $products[] = $row;
 }

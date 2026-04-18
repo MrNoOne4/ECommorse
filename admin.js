@@ -3,10 +3,8 @@ let arritems = []
 let tempId = "";
 let currentEditId = -1;
 
-// Used to track if user is editing an existing product
 let editingIndex = -1;
 
-// Expose modal functions globally (needed for onclick= in HTML)
 const overlay = document.querySelector(".overlay");
 
 window.closeModal = function () {
@@ -17,23 +15,18 @@ window.openModal = function () {
   overlay.classList.add("active");
 }
 
-// Runs when the page is fully loaded
 $(document).ready(async function () {
 
-  // Display all products on load
   displayItems();
 
-  // Logout button
   $("#logoutNav").click(async function () {
     if (confirm("Do you want to log out?")) {
       const res = await fetch('logout.php');
       const data = await res.json();
-
       if (!res.ok) {
         myToast("Logout unsuccessful!", "Danger");
         return;
       }
-
       return (window.location.href = "index.html");
     }
   });
@@ -45,7 +38,6 @@ $(document).ready(async function () {
 
   hideContainers();
 
-  // NAVIGATION (switch between product and transaction views)
   $("#productNav").click(function () {
     $("#productDashboard").show();
     $("#transactionContainer").hide();
@@ -64,27 +56,22 @@ $(document).ready(async function () {
     $("#cancelRecordContainer").show();
   });
 
-  // PRODUCT FORM submission (Add new product)
   $("#productForm").submit(function (e) {
     productFormSubmit(e);
   });
 
-  // UPDATE FORM submission (Edit existing product)
   $("#productUpdateForm").submit(function (e) {
     productUpdateFormSubmit(e);
   });
 
-  // SEARCH (filters products while typing)
   $("#searchInput").on("input", function () {
     displayItems();
   });
 
-  // FILTER (based on price category)
   $("#filterSelect").change(function () {
     displayItems();
   });
 
-  // EDIT PRODUCT — fetch data then open modal
   window.editProduct = async function (id) {
     currentEditId = id;
     const req = await fetch(`adminProductdb.php?id=${encodeURIComponent(id)}`, {
@@ -104,11 +91,10 @@ $(document).ready(async function () {
     $("#productUpdateQty").val(result.stock);
     $("#productUpdateDescription").val(result.description);
     $("#productUpdateImage").val(result.img);
-   $("#images").attr("src", result.img);
+    $("#images").attr("src", result.img);
     window.openModal();
   }
 
-  // Custom toast notification
   function myToast(message, status) {
     var $x = $("#snackbar");
     $x.html(message);
@@ -120,34 +106,27 @@ $(document).ready(async function () {
     }
 
     $x.addClass("show");
-
-    setTimeout(function () {
-      $x.removeClass("show");
-    }, 3000);
+    setTimeout(function () { $x.removeClass("show"); }, 3000);
   }
 
+  // FIX #7: clearBtn now properly shows/hides the button instead of only
+  // toggling disabled/cursor — users could still visually click it before.
   function clearBtn() {
-    $("#clearStorage").prop(
-      "disabled",
-      Array.isArray(arritems) && arritems.length !== 0 ? false : true
-    );
-
-    $("#clearStorage").css(
-      "cursor",
-      Array.isArray(arritems) && arritems.length !== 0 ? "pointer" : "not-allowed"
-    );
+    const hasItems = Array.isArray(arritems) && arritems.length !== 0;
+    if (hasItems) {
+      $("#clearStorage").show().prop("disabled", false).css("cursor", "pointer");
+    } else {
+      $("#clearStorage").hide().prop("disabled", true).css("cursor", "not-allowed");
+    }
   }
 
-  // DISPLAY PRODUCTS
   async function displayItems() {
     $("#itemContainer").html("");
 
-    const res = await fetch(`adminProductdb.php?search=${encodeURIComponent($("#searchInput").val())}&price=${encodeURIComponent($("#filterSelect").val())}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const res = await fetch(
+      `adminProductdb.php?search=${encodeURIComponent($("#searchInput").val())}&price=${encodeURIComponent($("#filterSelect").val())}`,
+      { method: "GET", headers: { "Content-Type": "application/json" } }
+    );
 
     if (!res.ok) {
       console.error("Failed to fetch products:", res.statusText);
@@ -158,7 +137,6 @@ $(document).ready(async function () {
 
     if (Array.isArray(arritems) && arritems.length !== 0) {
       $.each(arritems, function (index, item) {
-
         let card = `
           <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col hover:border-slate-300 hover:shadow-md transition-all duration-200">
             <img src="${item.img}" alt="${item.name}" class="w-full h-36 object-contain bg-slate-50 p-3">
@@ -177,40 +155,36 @@ $(document).ready(async function () {
               <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 transition-colors border-none cursor-pointer" type="button" onclick="editProduct(${item.productId})">Edit</button>
               <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-red-100 text-red-800 hover:bg-red-200 transition-colors border-none cursor-pointer" type="button" onclick="deleteProduct(${item.productId}, '${item.name}')">Delete</button>
             </div>
-          </div>
-        `;
-
+          </div>`;
         $("#itemContainer").append(card);
       });
+    } else {
+      $("#itemContainer").html('<p class="text-slate-400 text-center col-span-full py-10">No products found.</p>');
     }
 
     clearBtn();
   }
 
-  // Close modal when clicking outside
   overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) {
-      window.closeModal();
-    }
+    if (e.target === overlay) window.closeModal();
   });
 
-  // ADD NEW PRODUCT
   async function productFormSubmit(e) {
     e.preventDefault();
 
-    let name = $("#productName").val().trim();
-    let price = parseFloat($("#productPrice").val());
-    let category = $("#categoryFilter").val();
-    let quantity = parseInt($("#productQty").val());
+    let name        = $("#productName").val().trim();
+    let price       = parseFloat($("#productPrice").val());
+    let category    = $("#categoryFilter").val();
+    let quantity    = parseInt($("#productQty").val());
     let description = $("#productDescription").val().trim();
-    let imageUrl = $("#productImage").val().trim();
+    let imageUrl    = $("#productImage").val().trim();
 
-    if (name === "") { myToast("Product Name must not be empty.", "Danger"); return; }
-    if (description === "") { myToast("Product Description must not be empty.", "Danger"); return; }
-    if (!imageUrl) { myToast("Product must have an image.", "Danger"); return; }
-    if (category === "all") { myToast("Please select a category.", "Danger"); return; }
+    if (name === "")               { myToast("Product Name must not be empty.", "Danger"); return; }
+    if (description === "")        { myToast("Product Description must not be empty.", "Danger"); return; }
+    if (!imageUrl)                 { myToast("Product must have an image.", "Danger"); return; }
+    if (category === "all")        { myToast("Please select a category.", "Danger"); return; }
     if (isNaN(price) || isNaN(quantity)) { myToast("Please enter valid numbers for Price and Quantity.", "Danger"); return; }
-    if (price <= 0 || quantity <= 0) { myToast("Price and Quantity must be greater than zero.", "Danger"); return; }
+    if (price <= 0 || quantity <= 0)     { myToast("Price and Quantity must be greater than zero.", "Danger"); return; }
 
     try {
       const res = await fetch('adminProductdb.php', {
@@ -219,10 +193,7 @@ $(document).ready(async function () {
         body: JSON.stringify({ name, price, category, stock: quantity, img: imageUrl, description })
       });
 
-      if (!res.ok) {
-        myToast("Failed to add product.", "Danger");
-        return;
-      }
+      if (!res.ok) { myToast("Failed to add product.", "Danger"); return; }
 
       myToast("Product added successfully!", "Success");
       clearItemForm();
@@ -233,23 +204,22 @@ $(document).ready(async function () {
     }
   }
 
-  // UPDATE EXISTING PRODUCT
   async function productUpdateFormSubmit(e) {
     e.preventDefault();
 
-    let name = $("#productUpdateName").val().trim();
-    let price = parseFloat($("#productUpdatePrice").val());
-    let category = $("#categoryUpdateFilter").val();
-    let quantity = parseInt($("#productUpdateQty").val());
+    let name        = $("#productUpdateName").val().trim();
+    let price       = parseFloat($("#productUpdatePrice").val());
+    let category    = $("#categoryUpdateFilter").val();
+    let quantity    = parseInt($("#productUpdateQty").val());
     let description = $("#productUpdateDescription").val().trim();
-    let imageUrl = $("#productUpdateImage").val().trim();
+    let imageUrl    = $("#productUpdateImage").val().trim();
 
-    if (name === "") { myToast("Product Name must not be empty.", "Danger"); return; }
-    if (description === "") { myToast("Product Description must not be empty.", "Danger"); return; }
-    if (!imageUrl) { myToast("Product must have an image.", "Danger"); return; }
-    if (category === "all") { myToast("Please select a category.", "Danger"); return; }
+    if (name === "")               { myToast("Product Name must not be empty.", "Danger"); return; }
+    if (description === "")        { myToast("Product Description must not be empty.", "Danger"); return; }
+    if (!imageUrl)                 { myToast("Product must have an image.", "Danger"); return; }
+    if (category === "all")        { myToast("Please select a category.", "Danger"); return; }
     if (isNaN(price) || isNaN(quantity)) { myToast("Please enter valid numbers for Price and Quantity.", "Danger"); return; }
-    if (price <= 0 || quantity <= 0) { myToast("Price and Quantity must be greater than zero.", "Danger"); return; }
+    if (price <= 0 || quantity <= 0)     { myToast("Price and Quantity must be greater than zero.", "Danger"); return; }
 
     try {
       const res = await fetch(`adminProductdb.php?id=${encodeURIComponent(currentEditId)}`, {
@@ -258,10 +228,7 @@ $(document).ready(async function () {
         body: JSON.stringify({ name, price, category, stock: quantity, img: imageUrl, description })
       });
 
-      if (!res.ok) {
-        myToast("Failed to  update product.", "Danger");
-        return;
-      }
+      if (!res.ok) { myToast("Failed to update product.", "Danger"); return; }
 
       myToast("Product updated successfully!", "Success");
       window.closeModal();
@@ -272,7 +239,6 @@ $(document).ready(async function () {
     }
   }
 
-  // CLEAR ADD FORM
   function clearItemForm() {
     $("#productName").val("");
     $("#productPrice").val("");
@@ -282,12 +248,10 @@ $(document).ready(async function () {
     $("#productImage").val("");
   }
 
-  // OPEN CLEAR STORAGE MODAL
   $(document).on("click", "#clearStorage", () => {
     $("#myModal").fadeIn();
   });
 
-  // DELETE PRODUCT — show confirmation modal
   window.deleteProduct = function (id, productName) {
     tempId = id;
     $("#itemSelected").html(productName);
@@ -300,15 +264,8 @@ $(document).ready(async function () {
 
   $(document).on("click", "#deleteItemConfirm", async () => {
     try {
-      const res = await fetch(`adminProductdb.php?id=${tempId}`, {
-        method: "DELETE"
-      });
-
-      if (!res.ok) {
-        myToast("Failed to delete item.", "Danger");
-        return;
-      }
-
+      const res = await fetch(`adminProductdb.php?id=${tempId}`, { method: "DELETE" });
+      if (!res.ok) { myToast("Failed to delete item.", "Danger"); return; }
       displayItems();
       $("#deleteItemModal").fadeOut();
       myToast("Item Successfully Deleted", "Success");
@@ -317,21 +274,19 @@ $(document).ready(async function () {
     }
   });
 
-  // CLOSE CLEAR MODAL
   $(document).on("click", ".close, #modalCancel", () => {
     $("#myModal").fadeOut();
   });
 
-  // CONFIRM CLEAR ALL
+  // FIX #2: removed ?confirm=yes — the PHP no longer requires it
   $("#modalConfirm").click(async function () {
     $("#myModal").fadeOut();
 
-    const res = await fetch('adminProductdb.php', {
-      method: 'DELETE',
-    });
+    const res = await fetch('adminProductdb.php', { method: 'DELETE' });
 
     if (!res.ok) {
       console.error("Failed to clear storage:", res.statusText);
+      myToast("Failed to clear products.", "Danger");
       return;
     }
 

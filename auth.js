@@ -185,7 +185,7 @@ async function validateLogin(e) {
   hideForms("loginForm");
   navigation();
 
-  if (result.role === "admin") {
+  if ((result.role || "").toLowerCase() === "admin") {
     window.location.href = "adminDashboard.php";
     return;
   }
@@ -297,9 +297,10 @@ document.querySelector("#deleteConfirm").addEventListener("click", async () => {
 document.addEventListener("click", async function (e) {
   const session = await checkUserSessions();
   const token = session.user;
+  console.log(token);
 
-    if (!token.ID) {
-      toast("user are not authenticated.", false, "#toast-default");
+  if (!token?.ID) {
+      
       return;
   }
 
@@ -357,16 +358,16 @@ document.addEventListener("click", async function (e) {
   updateCartCount();
   renderTransaction();
 
-  const profileContainer = document.querySelector("#profileContainer");
-  if (profileContainer) {
-    profileContainer.style.transition = "opacity 0.3s ease";
-    profileContainer.style.opacity = "0";
+  // const profileContainer = document.querySelector("#profileContainer");
+  // if (profileContainer) {
+  //   profileContainer.style.transition = "opacity 0.3s ease";
+  //   profileContainer.style.opacity = "0";
 
-    setTimeout(() => {
-      profileContainer.style.display = "none";
-    }, 300);
-  }
-
+  //   setTimeout(() => {
+  //     profileContainer.style.display = "none";
+  //   }, 300);
+  // }
+  hideChangeEmailModal();
 });
 
 // Update the logged-in user's email
@@ -407,6 +408,13 @@ document.querySelector("#updateBtn").addEventListener("click", async () => {
   toast("Email updated!", true, "#toast-default");
 
   await initializedProfile(); // reload UI from session
-
+  hideChangeEmailModal();
   document.querySelector("#newEmail").value = "";
 });
+
+function hideChangeEmailModal() {
+  document.querySelector("#confirmationInputModal").style.display = "none";
+  document.querySelector("#inputModalContainer").style.display = "none";
+  document.querySelector("#profileContainer").style.display = "none";
+
+}

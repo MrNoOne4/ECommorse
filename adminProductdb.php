@@ -8,7 +8,8 @@ header("Cache-Control: no-store, no-cache, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-if (!isset($_SESSION["admin"])) {
+// FIX #1: was checking $_SESSION["admin"] but login sets $_SESSION["user"] with role
+if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
     http_response_code(401);
     echo json_encode(["error" => "Unauthorized"]);
     exit;
@@ -23,58 +24,9 @@ function jsonResponse($data, $code = 200) {
     exit;
 }
 
-function validateProduct($data, $isUpdate = false) {
-    $errors = [];
-
-    $name = trim($data['name'] ?? '');
-    $price = $data['price'] ?? null;
-    $category = trim($data['category'] ?? '');
-    $stock = $data['stock'] ?? null;
-
-    if (!$isUpdate || isset($data['name'])) {
-        if ($name === '') {
-            $errors[] = "Name is required";
-        } elseif (strlen($name) < 3) {
-            $errors[] = "Name must be at least 3 characters";
-        }
-    }
-
-    if (!$isUpdate || isset($data['price'])) {
-        if ($price === null || $price === '') {
-            $errors[] = "Price is required";
-        } elseif (!is_numeric($price)) {
-            $errors[] = "Price must be a number";
-        } elseif ($price < 0) {
-            $errors[] = "Price cannot be negative";
-        }
-    }
-
-    if (!$isUpdate || isset($data['stock'])) {
-        if ($stock === null || $stock === '') {
-            $errors[] = "Stock is required";
-        } elseif (!is_numeric($stock)) {
-            $errors[] = "Stock must be a number";
-        } elseif ($stock < 0) {
-            $errors[] = "Stock cannot be negative";
-        }
-    }
-
-    if (isset($data['category']) && strlen($category) > 50) {
-        $errors[] = "Category too long (max 50 chars)";
-    }
-
-    $img = trim($data['img'] ?? '');
-    if ($img !== '' && !filter_var($img, FILTER_VALIDATE_URL)) {
-        $errors[] = "Image must be a valid URL";
-    }
-
-    return $errors;
-}
-
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
-
 
     case 'GET':
         $id = $_GET['id'] ?? null;
@@ -95,7 +47,7 @@ switch ($method) {
                 http_response_code(404);
                 echo json_encode(["error" => "Product not found"]);
             }
-            exit; 
+            exit;
         }
 
         $sql = "SELECT * FROM products WHERE 1=1";
@@ -123,13 +75,11 @@ switch ($method) {
                 $types .= "ii";
             } elseif ($price === 'High') {
                 $sql .= " AND price > ?";
-                
                 $params[] = 500;
                 $types .= "i";
             }
-            
         }
-    
+
         $stmt = $db->prepare($sql);
 
         if (!empty($params)) {
@@ -140,24 +90,21 @@ switch ($method) {
         $result = $stmt->get_result();
 
         $products = [];
-
         while ($row = $result->fetch_assoc()) {
             $products[] = $row;
         }
         $stmt->close();
         echo json_encode($products);
-        exit; 
-        break;
-        
-    case 'POST':
+        exit;
 
+    case 'POST':
         $data = json_decode(file_get_contents("php://input"), true);
 
-        $name = trim($data['name'] ?? '');
-        $price = (float)($data['price'] ?? 0);
-        $category = (string)($data['category'] ?? '');
-        $stock = (int)($data['stock'] ?? 0);
-        $img = trim($data['img'] ?? '');
+        $name        = trim($data['name'] ?? '');
+        $price       = (float)($data['price'] ?? 0);
+        $category    = (string)($data['category'] ?? '');
+        $stock       = (int)($data['stock'] ?? 0);
+        $img         = trim($data['img'] ?? '');
         $description = trim($data['description'] ?? '');
 
         $stmt = $db->prepare("
@@ -165,30 +112,15 @@ switch ($method) {
             VALUES (?, ?, ?, ?, ?, ?)
         ");
 
-        $stmt->bind_param(
-            "sdssss",
-            $name,
-            $price,
-            $category,
-            $stock,
-            $img,
-            $description
-        );
+        $stmt->bind_param("sdssss", $name, $price, $category, $stock, $img, $description);
 
         if (!$stmt->execute()) {
-            jsonResponse([
-                "error" => "Insert failed",
-                "details" => $stmt->error
-            ], 500);
+            jsonResponse(["error" => "Insert failed", "details" => $stmt->error], 500);
         }
 
-        jsonResponse([
-            "message" => "Product added successfully",
-            "productId" => $stmt->insert_id
-        ], 201);
+        jsonResponse(["message" => "Product added successfully", "productId" => $stmt->insert_id], 201);
 
     case 'PATCH':
-
         $id = $_GET['id'] ?? null;
 
         if (empty($id)) {
@@ -208,40 +140,26 @@ switch ($method) {
 
         $data = json_decode(file_get_contents("php://input"), true);
 
-        $name = $data['name'] ?? $current['name'];
-        $price = (float)($data['price'] ?? $current['price']);
-        $category = (string)($data['category'] ?? $current['category']);
-        $stock = (int)($data['stock'] ?? $current['stock']);
-        $img = $data['img'] ?? $current['img'];
+        $name        = $data['name']        ?? $current['name'];
+        $price       = (float)($data['price']  ?? $current['price']);
+        $category    = (string)($data['category'] ?? $current['category']);
+        $stock       = (int)($data['stock']  ?? $current['stock']);
+        $img         = $data['img']         ?? $current['img'];
         $description = $data['description'] ?? $current['description'];
-
-        $id = (int)$id;
+        $id          = (int)$id;
 
         $stmt = $db->prepare("
-            UPDATE products 
-            SET name = ?, price = ?, category = ?, stock = ?, img = ?, description = ? 
+            UPDATE products
+            SET name = ?, price = ?, category = ?, stock = ?, img = ?, description = ?
             WHERE productId = ?
         ");
 
-        $stmt->bind_param(
-            "sdssssi",
-            $name,
-            $price,
-            $category,
-            $stock,
-            $img,
-            $description,
-            $id
-        );
-
+        $stmt->bind_param("sdssssi", $name, $price, $category, $stock, $img, $description, $id);
         $stmt->execute();
 
         jsonResponse(["message" => "Product updated successfully"]);
 
-        break;
-
     case 'DELETE':
-
         $id = $_GET['id'] ?? null;
 
         if (!empty($id)) {
@@ -253,15 +171,9 @@ switch ($method) {
             jsonResponse(["message" => "Product deleted", "id" => $id]);
         }
 
-        if (!isset($_GET['confirm']) || $_GET['confirm'] !== 'yes') {
-            jsonResponse(["error" => "Confirmation required"], 400);
-        }
 
         $db->query("DELETE FROM products");
-
         jsonResponse(["message" => "All products deleted"]);
-
-        break;
 
     default:
         jsonResponse(["error" => "Method not allowed"], 405);

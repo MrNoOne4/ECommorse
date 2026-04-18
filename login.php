@@ -53,7 +53,7 @@ if ($row = $result->fetch_assoc()) {
         echo json_encode([
             "success" => true,
             "message" => "Login successful",
-            "role" => $row['role']
+            "role" => strtolower(trim($row['role']))
         ]);
         exit;
 

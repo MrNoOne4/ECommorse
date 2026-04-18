@@ -18,15 +18,17 @@ $id = $_SESSION["user"]["ID"];
 
 switch ($method) {
 
-    // ========================
-    // GET PROFILE
-    // ========================
     case "GET":
 
         $stmt = $db->prepare("
-            SELECT Users.email, backgroundFirst, backgroundSecond, textColor
+            SELECT 
+                Users.email,
+                customProfile.backgroundFirst,
+                customProfile.backgroundSecond,
+                customProfile.textColor
             FROM Users
-            LEFT JOIN customProfile ON Users.ID = customProfile.userId
+            LEFT JOIN customProfile 
+                ON Users.ID = customProfile.userId
             WHERE Users.ID = ?
         ");
 
@@ -50,15 +52,16 @@ switch ($method) {
         echo json_encode(["user" => $row]);
         exit;
 
-    // ========================
-    // DELETE ACCOUNT
-    // ========================
+
     case "DELETE":
 
         $db->begin_transaction();
 
         try {
-            // ONLY delete user (cascade handles customProfile)
+            $stmt = $db->prepare("DELETE FROM customProfile WHERE userId = ?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+
             $stmt = $db->prepare("DELETE FROM Users WHERE ID = ?");
             $stmt->bind_param("i", $id);
             $stmt->execute();
@@ -87,15 +90,12 @@ switch ($method) {
 
         exit;
 
-    // ========================
-    // UPDATE (PATCH)
-    // ========================
+
     case "PATCH":
 
         $action = $_GET["action"] ?? "";
         $data = json_decode(file_get_contents("php://input"), true);
 
-        // -------- UPDATE EMAIL --------
         if ($action === "updateEmail") {
 
             $email = trim($data["email"] ?? "");
@@ -130,27 +130,22 @@ switch ($method) {
             exit;
         }
 
-        // -------- UPDATE COLORS --------
         if ($action === "updateColor") {
 
             $backgroundFirst = trim($data["backgroundFirst"] ?? "");
             $backgroundSecond = trim($data["backgroundSecond"] ?? "");
             $color = trim($data["color"] ?? "");
 
-            // Ensure row exists (important!)
-            $db->query("
-                INSERT INTO customProfile (userId)
-                VALUES ($id)
-                ON DUPLICATE KEY UPDATE userId = userId
-            ");
-
             $stmt = $db->prepare("
-                UPDATE customProfile
-                SET backgroundFirst = ?, backgroundSecond = ?, textColor = ?
-                WHERE userId = ?
+                INSERT INTO customProfile (userId, backgroundFirst, backgroundSecond, textColor)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    backgroundFirst = VALUES(backgroundFirst),
+                    backgroundSecond = VALUES(backgroundSecond),
+                    textColor = VALUES(textColor)
             ");
 
-            $stmt->bind_param("sssi", $backgroundFirst, $backgroundSecond, $color, $id);
+            $stmt->bind_param("isss", $id, $backgroundFirst, $backgroundSecond, $color);
 
             if ($stmt->execute()) {
                 echo json_encode(["success" => true]);
