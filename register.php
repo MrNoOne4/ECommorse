@@ -42,7 +42,7 @@ try {
     $stmt->bind_param("ss", $email, $hashPassword);
 
     if (!$stmt->execute()) {
-        throw new Exception("User insert failed (maybe duplicate email)");
+        throw new Exception("User insert failed");
     }
 
     $userId = $conn->insert_id;

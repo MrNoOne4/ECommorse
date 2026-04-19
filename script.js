@@ -1,7 +1,7 @@
 "use strict";
 
 let products = [];
-
+const loading = document.getElementById("loading");
 async function cartBtn() {
   let isLogin = await checkUserSessions();
   if (isLogin.loggedIn) {
@@ -29,12 +29,19 @@ async function navigation() {
 }
 
 function resetCheckOutForm() {
-  const input = document.querySelectorAll("#checkOut > input");
-  for (let i = 0; i < input.length; i++) {
-    input[i].value = " ";
-  }
-  document.getElementById("select-municipality-input-3").selectedIndex = 0;
-  document.querySelector('input[type="radio"]').checked = false;
+  const inputs = document.querySelectorAll("#checkOut input");
+
+  inputs.forEach(input => {
+    if (input.type === "radio" || input.type === "checkbox") {
+      input.checked = false;
+    } else {
+      input.value = "";
+    }
+  });
+
+  document.querySelectorAll("#checkOut select").forEach(select => {
+    select.selectedIndex = 0;
+  });
 }
 
 navigation();
@@ -74,46 +81,33 @@ async function fetchProducts() {
   }
 }
 
-window.removeFromCart = (productId) => {
+window.removeFromCart = async (productId, quantity) => {
   document.getElementById("thisModals").classList.add("z-[9999]");
   window.confirmDelete = () => {
     document.getElementById("thisModals").classList.remove("z-[9999]");
-    removeCart(productId);
+    removeCart(productId, quantity);
     toast(" Product successfully deleted.", true, "#toastRemove");
     document.getElementById("thisModals").classList.add("z-[-1]");
   };
 };
 
-  async function getCart() {
-      let isLogin = await checkUserSessions();
-      const userId = isLogin.user.ID;
-      if (!isLogin.loggedIn) {
-          return;
-      }
+async function getCart() {
+  let isLogin = await checkUserSessions();
+  if (!isLogin.loggedIn) return [];
 
-    // const token = localStorage.getItem("token");
-    // if (!token) return [];
+  const userId = isLogin.user.ID;
 
-    // const stored = localStorage.getItem(`cart_${token}`);
-    // if (!stored) return [];
-    // try {
-    //   return JSON.parse(stored);
-    // } catch (err) {
-    //   return [];
-    // }
+  const req = await fetch(`shopping.php?id=${encodeURIComponent(userId)}`, {
+    method: "GET",
+    credentials: "include"
+  });
 
-    const req = await fetch(`shopping.php?id=${userId}`, {
-      method: "GET",
-      include: "credentials"
-    })
+  if (!req.ok) {
+    console.log("Something went wrong fetching cart");
+    return [];
+  }
 
-    const result = await req.json();
-    if (!req.ok) {
-      console.log("Something went wrong fetching cart page");
-      return;
-    }
-
-    return result;
+  return await req.json();
 }
 
 function getTodayDate() {
@@ -136,9 +130,72 @@ function getTransaction() {
   }
 }
 
+const checkoutForm = document.getElementById("checkOut");
+
+checkoutForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  try {
+    const cart = await getCart();
+
+    if (cart.length === 0) {
+      toast("Your cart is empty. Please add items before proceeding to checkout.", false, "#toastProceed");
+      return;
+    }
+
+    const session = await checkUserSessions();
+    if (!session.loggedIn) return;
+
+    const userId = session.user.ID;
+
+    const modal = document.getElementById("containerModal");
+
+    loading?.classList.remove("z-[-1]");
+    loading?.classList.add("z-[9999]");
+
+    const res = await fetch("checkout.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ userId, cart })
+    });
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error("Invalid JSON response from server");
+    }
+
+    if (!res.ok) {
+      throw new Error(data.error || "Checkout failed");
+    }
+
+    setTimeout(() => {
+      loading?.classList.remove("z-[9999]");
+      loading?.classList.add("z-[-1]");
+      modal?.classList.remove("hidden");
+    }, 1500);
+  resetCheckOutForm();
+
+    await updateAuthButtons();
+    await loadProducts();
+    await updateCartCount();
+    await renderCart();
+    await renderTransaction();
+
+  } catch (err) {
+    loading?.classList.remove("z-[9999]");
+    loading?.classList.add("z-[-1]");
+    console.error(err);
+    toast(err.message || "An unexpected error occurred.", false, "#toastProceed");
+  }
+});
+
 function saveTransaction(transactionCart) {
   const token = localStorage.getItem("token");
   const getDate = new Date().toLocaleDateString();
+  
 
   const admin = JSON.parse(localStorage.getItem("transaction")) || {};
   const key = `transact_${token}`;
@@ -154,14 +211,18 @@ function saveTransaction(transactionCart) {
   localStorage.setItem(`transaction`, JSON.stringify(admin));
 }
 
-function saveCart(cart) {
+
+
+
+async function saveCart(cart) {
   const token = localStorage.getItem("token");
   localStorage.setItem(`cart_${token}`, JSON.stringify(cart));
   updateCartCount();
 }
 
 async function updateCartCount() {
-  const cart = getCart() || [];
+  const cart = await getCart();
+  if (!Array.isArray(cart)) return;
   let total = 0;
   for (let i = 0; i < cart.length; i++) {
     total += cart[i].productQuantity;
@@ -169,59 +230,48 @@ async function updateCartCount() {
   document.getElementById("cartCount").textContent = total;
 }
 
-window.addToCart = async (index) => {
-  alert("ID: " + index);
+window.addToCart = async (productId, btn) => {
+  const isLogin = await checkUserSessions();
+  if (!isLogin.loggedIn) return;
 
-  let cart = getCart() || [];
+  const userId = isLogin.user.ID;
+  const product = products.find(p => String(p.productId) === String(productId));
+  if (!product) return;
 
-  const orderSummaryBtn = document.querySelector("#orderSummary");
-  orderSummaryBtn.disabled = false;
-  orderSummaryBtn.style.cursor = "pointer";
+  try {
+    const res = await fetch("shopping.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        userId,
+        productId: product.productId,
+        productName: product.name,
+        productImg: product.img,
+        productPrice: product.price
+      })
+    });
 
-  const product = products[index];
+    if (!res.ok) return;
 
- 
-  let existing = null;
-  for (let i = 0; i < cart.length; i++) {
-    if (cart[i].productId === product.productId) {
-      existing = cart[i];
-      break;
-    }
+    await updateCartCount();
+    await renderCart();
+
+  } catch (err) {
+    console.log(err);
   }
 
-  // if (existing) {
-  //   existing.productQuantity++;
-  //   products[index].stock -= 1;
-  // } else {
-  //   cart.push({
-  //     productName:     product.name,
-  //     productImg:      product.img,
-  //     productPrice:    product.price,
-  //     productQuantity: 1,
-  //     productId:       product.productId,   
-  //   });
-  //   products[index].stock -= 1;
-  // }
-
-  // saveCart(cart);
-
-
-
-
-// no need to touch this 
-  const btns = document.querySelectorAll(".addToCartBtn");
-  const btn = btns[index - 1];
   if (btn) {
     const original = btn.innerHTML;
     btn.innerHTML = "✓ Added!";
     btn.style.background = "#16a34a";
-    btn.style.cursor = "not-allowed";
     btn.disabled = true;
-    setTimeout(() => {
+
+    setTimeout(async () => {
       btn.innerHTML = original;
       btn.style.background = "";
-      btn.style.cursor = "default";
       btn.disabled = false;
+      await loadProducts();
     }, 1000);
   }
 };
@@ -231,126 +281,180 @@ async function loadProducts() {
   displayProducts(products);
 }
 
-// FIX #6: changed all productCode references to productId
-async function removeCart(productId) {
-  let productIndex = -1;
-  for (let i = 0; i < products.length; i++) {
-    if (String(products[i].productId) === String(productId)) {
-      productIndex = i;
-      break;
+async function removeCart(productId, quantity) {
+  const session = await checkUserSessions();
+  if (!session.loggedIn) return;
+
+  const userId = session.user?.ID;
+
+  let cart = await getCart();
+  let item = cart.find(i => String(i.productId) === String(productId));
+  if (!item) return;
+
+  try {
+    const res = await fetch('shopping.php', {
+      method: "DELETE",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify({ userId, productId, quantity })
+    });
+
+    if (!res.ok) {
+      console.error(await res.text());
+      return;
     }
+
+    await updateCartCount();
+    await loadProducts();
+    await renderCart();
+  } catch (error) {
+    console.log(error);
   }
-
-  const carts = getCart();
-  let cartIndex = -1;
-  for (let i = 0; i < carts.length; i++) {
-    if (String(carts[i].productId) === String(productId)) {
-      cartIndex = i;
-      break;
-    }
-  }
-
-  if (cartIndex === -1) return;
-
-  if (productIndex !== -1) {
-    products[productIndex].stock += carts[cartIndex].productQuantity;
-  }
-
-  const newCart = [];
-  for (let i = 0; i < carts.length; i++) {
-    if (i !== cartIndex) newCart.push(carts[i]);
-  }
-
-  saveCart(newCart);
-  renderCart();
 }
 
 async function initializedProfile() {
-  const session = await checkUserSessions();
-  const profile = document.getElementById("profile");
-  const profileInitial = document.getElementById("profileInitial");
-  const initialBackground = document.getElementById("initialBackground");
-  const initial = document.getElementById("initial");
+  try {
+    const session = await checkUserSessions();
 
-  if (!profile || !profileInitial || !initialBackground || !initial) return;
+    const profile = document.getElementById("profile");
+    const profileInitial = document.getElementById("profileInitial");
+    const initialBackground = document.getElementById("initialBackground");
+    const initial = document.getElementById("initial");
 
-  if (!session || !session.loggedIn) {
-    profile.classList.remove("block");
-    profile.classList.add("hidden");
-    return;
+    if (!profile || !profileInitial || !initialBackground || !initial) return;
+
+    if (!session?.loggedIn) {
+      profile.classList.add("hidden");
+      profile.classList.remove("block");
+      return;
+    }
+
+    const req = await fetch("profile.php", {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!req.ok) throw new Error("Failed to fetch profile");
+
+    const data = await req.json();
+
+    const user = data?.user;
+    if (!user) throw new Error("Invalid user data");
+
+    const {
+      backgroundFirst = "#ccc",
+      backgroundSecond = "#999",
+      textColor = "#000",
+      email = "",
+    } = user;
+
+    const firstChar = email?.trim()?.charAt(0)?.toUpperCase() || "?";
+
+    initial.textContent = firstChar;
+    profileInitial.textContent = firstChar;
+
+    initial.style.color = textColor;
+    profileInitial.style.background = `linear-gradient(45deg, ${backgroundFirst}, ${backgroundSecond})`;;
+    profileInitial.style.color = textColor;
+
+    initialBackground.style.background = `linear-gradient(45deg, ${backgroundFirst}, ${backgroundSecond})`;
+
+    profile.classList.remove("hidden");
+    profile.classList.add("block");
+
+  } catch (error) {
+    console.error("Profile initialization error:", error);
   }
-
-  const req = await fetch(`profile.php`, { method: "GET", credentials: "include" });
-  const data = await req.json();
-  const { backgroundFirst, backgroundSecond, textColor, email } = data.user;
-
-  const firstChar = email[0].toUpperCase();
-  initial.innerHTML = firstChar;
-  profileInitial.innerHTML = firstChar;
-  initial.style.color = textColor;
-  initialBackground.style.background = backgroundFirst;
-  profileInitial.style.background = backgroundFirst;
-  profileInitial.style.color = textColor;
-
-  profile.classList.remove("hidden");
-  profile.classList.add("block");
 }
 
-// FIX #6: changed productCode -> productId in changeQty
-window.changeQty = (productId, delta, action) => {
-  let cart = getCart() || [];
-  let item = null;
-  let cartIndex = -1;
+window.changeQty = async (productId, delta, action) => {
+  const session = await checkUserSessions();
+  if (!session.loggedIn) return;
 
-  for (let i = 0; i < cart.length; i++) {
-    if (String(cart[i].productId) === String(productId)) {
-      item = cart[i];
-      cartIndex = i;
-      break;
-    }
-  }
+  const userId = session.user.ID;
+
+  let cart = await getCart();
+  let item = cart.find(i => String(i.productId) === String(productId));
   if (!item) return;
 
-  let productIndex = -1;
-  for (let i = 0; i < products.length; i++) {
-    if (String(products[i].productId) === String(productId)) {
-      productIndex = i;
-      break;
-    }
-  }
-  if (productIndex === -1) return;
+  let newQty = item.productQuantity + delta;
 
-  const product = products[productIndex];
-
-  if (action === "decrease") {
-    item.productQuantity += delta;
-    product.stock += 1;
-  }
-
-  if (product.stock <= 0 && action === "increase") {
-    toast(" Sorry, this product is currently out of stock", false, "#toastRemove");
+  if (newQty <= 0) {
+    await removeCart(productId, item.productQuantity);
     return;
   }
 
-  if (action === "increase" && product.stock > 0) {
-    item.productQuantity += delta;
-    product.stock -= 1;
-  }
+  try {
+    const req = await fetch(`shopping.php?action=${encodeURIComponent(action)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ userId, productId, quantity: newQty })
+    });
 
-  if (item.productQuantity === 0) {
-    const newCart = [];
-    for (let i = 0; i < cart.length; i++) {
-      if (i !== cartIndex) newCart.push(cart[i]);
+    if (!req.ok) {
+      console.error(await req.text());
+      return;
     }
-    cart = newCart;
-  }
 
-  saveCart(cart);
-  renderCart();
+    await updateCartCount();
+    await loadProducts();
+    await renderCart();
+  } catch (err) {
+    console.log(err);
+  }
 };
 
-function renderCart() {
-  let cart = getCart() || [];
+
+document.addEventListener("click", function (e) {
+
+  // Show order summary panel
+  if (e.target && e.target.id === "orderSummary") {
+    const summary = document.getElementById("cartSummary");
+    const modalContainer = document.getElementById("modalContainer");
+    if (summary) {
+      summary.classList.remove("hidden");
+      summary.style.display = "flex";
+    }
+    if (modalContainer) {
+      modalContainer.style.display = "block";
+    }
+    return;
+  }
+
+  if (e.target && e.target.id === "closeModal") {
+    const summary = document.getElementById("cartSummary");
+    const modalContainer = document.getElementById("modalContainer");
+    if (summary) {
+      summary.classList.add("hidden");
+      summary.style.display = "none";
+    }
+    if (modalContainer) {
+      modalContainer.style.display = "none";
+    }
+    return;
+  }
+
+  if (e.target && e.target.id === "checkOutBtn") {
+    navigate(2);
+    const summary = document.getElementById("cartSummary");
+    const modalContainer = document.getElementById("modalContainer");
+    if (summary) {
+      summary.classList.add("hidden");
+      summary.style.display = "none";
+    }
+    if (modalContainer) {
+      modalContainer.style.display = "none";
+    }
+    return;
+  }
+});
+
+
+
+async function renderCart() {
+  let cart = await getCart();
+  if (!Array.isArray(cart)) cart = [];
+
   tbody.innerHTML = "";
   document.getElementById("Subtotal").innerHTML = "";
   document.getElementById("paymentContainer").innerHTML = "";
@@ -358,9 +462,13 @@ function renderCart() {
   const oldSummary = document.getElementById("cartSummary");
   if (oldSummary) oldSummary.remove();
 
+  const orderSummaryBtn = document.querySelector("#orderSummary");
+
   if (cart.length === 0) {
-    document.querySelector("#orderSummary").disabled = true;
-    document.querySelector("#orderSummary").style.cursor = "not-allowed";
+    orderSummaryBtn.disabled = true;
+    orderSummaryBtn.style.cursor = "not-allowed";
+    orderSummaryBtn.style.opacity = "0.5";
+
     tbody.innerHTML = `
       <tr>
         <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-lg">
@@ -371,13 +479,16 @@ function renderCart() {
     return;
   }
 
+  orderSummaryBtn.disabled = false;
+  orderSummaryBtn.style.cursor = "pointer";
+  orderSummaryBtn.style.opacity = "1";
+
   let grandTotal = 0;
   for (let i = 0; i < cart.length; i++) {
     let item = cart[i];
     const lineTotal = item.productPrice * item.productQuantity;
     grandTotal += lineTotal;
 
-    // FIX #6: use productId instead of productCode in onclick handlers
     tbody.innerHTML += `
       <tr class="group border-b border-red-500 hover:bg-amber-50/30 transition-all duration-200">
         <td class="px-5 py-4">
@@ -412,7 +523,7 @@ function renderCart() {
           <span class="text-sm font-bold text-amber-600">₱${lineTotal.toFixed(2)}</span>
         </td>
         <td class="px-5 py-4">
-          <button onclick="removeFromCart('${item.productId}')"
+          <button onclick="removeFromCart('${item.productId}', ${item.productQuantity})"
             class="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-500 border border-red-100 hover:border-transparent text-red-400 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer group/btn shadow-xs">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 6L6 18M6 6l12 12"/>
@@ -422,9 +533,10 @@ function renderCart() {
       </tr>`;
   }
 
+  // Build the summary panel — starts hidden, shown when user clicks "Order Summary"
   const summaryEl = document.createElement("div");
   summaryEl.id = "cartSummary";
-  summaryEl.className = "flex justify-end px-6 py-8 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-999999 hidden fixed";
+  summaryEl.className = "hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] flex justify-center items-center";
   summaryEl.innerHTML = `
     <div class="bg-white rounded-2xl shadow-md p-6 min-w-[280px] border border-gray-100">
       <span class="flex justify-between flex-col">
@@ -459,7 +571,6 @@ function renderCart() {
   tableWrapper.parentNode.insertBefore(summaryEl, tableWrapper.nextSibling);
 }
 
-
 function renderTransaction() {
   let transactionCart = getTransaction() || {};
   const dateContainer = document.getElementById("dateContainer");
@@ -481,7 +592,6 @@ function renderTransaction() {
 
   dates.forEach((key) => {
     dateContainer.innerHTML += `<strong>${key}</strong>`;
-
     transactionCart[key].forEach((item, i) => {
       transactionContainer.innerHTML += `
         <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 mb-3">
@@ -534,8 +644,6 @@ function renderTransaction() {
   });
 }
 
-renderTransaction();
-
 let searchValue = "";
 let categoryValue = "all";
 
@@ -570,19 +678,17 @@ async function displayProducts(products) {
     return;
   }
 
+  let isLogin = await checkUserSessions();
   cardContainer.innerHTML = "";
 
   for (let i = 0; i < products.length; i++) {
     let e = products[i];
-    let isLogin = await checkUserSessions();
-
     let stars = "";
     for (let j = 0; j < 5; j++) {
       stars += `<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
         <path d="M13.849 4.22c-.684-1.626-3.014-1.626-3.698 0L8.397 8.387l-4.552.361c-1.775.14-2.495 2.331-1.142 3.477l3.468 2.937-1.06 4.392c-.413 1.713 1.472 3.067 2.992 2.149L12 19.35l3.897 2.354c1.52.918 3.405-.436 2.992-2.15l-1.06-4.39 3.468-2.938c1.353-1.146.633-3.336-1.142-3.477l-4.552-.36-1.754-4.17Z"/>
       </svg>`;
     }
-
 
     cardContainer.innerHTML += `
       <div class="w-full bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -602,7 +708,7 @@ async function displayProducts(products) {
           <button
             type="button"
             class="addToCartBtn inline-flex items-center gap-1.5 cursor-pointer bg-black text-white font-medium text-sm px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-            onclick="${isLogin.loggedIn ? `addToCart(${e.productId})` : `showForms()`}"
+            onclick="${isLogin.loggedIn ? `addToCart(${e.productId}, this)` : `showForms()`}"
             ${e.stock <= 0 ? "disabled" : ""}
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -619,7 +725,6 @@ function toast(message, status, element) {
   const toastEl = document.querySelector(element);
   if (toastEl === null) return;
   toastEl.classList.remove("top-[200%]");
-
   if (status) {
     toastEl.innerHTML = `<span class="text-xl">✅</span><span class="font-medium">${message}</span>`;
     toastEl.classList.add("top-10", "bg-green-500", "text-white", "z-9999");
@@ -631,11 +736,13 @@ function toast(message, status, element) {
   }
 }
 
+
 (async () => {
   await updateAuthButtons();
   await initializedProfile();
+  await renderCart();     
+  await updateCartCount();
 })();
 
 loadProducts();
-updateCartCount();
-renderCart();
+renderTransaction();

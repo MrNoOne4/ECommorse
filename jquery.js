@@ -138,44 +138,44 @@ function resetToggle() {
   }
 
   // Handle checkout form submission
-  $(document).on("submit", "#checkOut", (e) => {
-    const cart = getCart();
-    e.preventDefault();
+  // $(document).on("submit", "#checkOut", async (e) => {
+  //   const cart = getCart();
+  //   e.preventDefault();
 
-    // Validate cart is not empty
-    if (cart.length === 0) {
-      toast(
-        "  Your cart is empty. Please add items before proceeding to checkout.",
-        false,
-        "#toastProceed",
-      );
-      return;
-    }
+  //   // Validate cart is not empty
+  //   if (cart.length === 0) {
+  //     toast(
+  //       "  Your cart is empty. Please add items before proceeding to checkout.",
+  //       false,
+  //       "#toastProceed",
+  //     );
+  //     return;
+  //   }
 
-    // Show loading indicator
-    $("#loading").removeClass("z-[-1]");
-    $("#loading").addClass("z-[9999]");
+  //   alert("hello");
+  //   $("#loading").removeClass("z-[-1]");
+  //   $("#loading").addClass("z-[9999]");
 
-    // Hide loading and show success modal after 2.5 seconds
-    setTimeout(() => {
-      $("#loading").removeClass("z-[9999]");
-      $("#loading").addClass("z-[-1]");
-      $("#containerModal").removeClass("hidden");
-      resetCheckOutForm();
-    }, 2500);
+  //   // Hide loading and show success modal after 2.5 seconds
+  //   setTimeout(() => {
+  //     $("#loading").removeClass("z-[9999]");
+  //     $("#loading").addClass("z-[-1]");
+  //     $("#containerModal").removeClass("hidden");
+  //     resetCheckOutForm();
+  //   }, 2500);
 
-    // Save transaction and clear cart from storage
-    saveTransaction(cart);
-    const token = localStorage.getItem("token");
-    localStorage.removeItem(`cart_${token}`);
+  //   // Save transaction and clear cart from storage
+  //   saveTransaction(cart);
+  //   const token = localStorage.getItem("token");
+  //   localStorage.removeItem(`cart_${token}`);
 
-    // Update UI elements
-    updateAuthButtons();
-    showProducts(products);
-    updateCartCount();
-    renderCart();
-    renderTransaction();
-  });
+  //   // Update UI elements
+  //   updateAuthButtons();
+  //   showProducts(products);
+  //   updateCartCount();
+  //   renderCart();
+  //   renderTransaction();
+  // });
 
   // Close success modal
   $(document).on("click", "#closeButton, #closeIcon", function () {
@@ -308,8 +308,9 @@ function resetToggle() {
   // Load and display user's saved color preferences
   async function intitializeColors() {
     const session = await checkUserSessions();
-    const userId = session.user.ID;
-    console.log(session);
+    const userId = session.user?.ID;
+    if (!userId) return;
+
     const res = await fetch("getProfile.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -325,6 +326,7 @@ function resetToggle() {
     $("#backgroundFirst").val(backgroundFirst);
     $("#backgroundSecond").val(backgroundSecond);
     $("#color").val(textColor);
+    $("#initialBackground").css( "background", `linear-gradient(45deg, ${backgroundFirst}, ${backgroundSecond})` );
   }
 
   // Initialize colors on page load
