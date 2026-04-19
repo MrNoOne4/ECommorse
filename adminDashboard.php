@@ -122,7 +122,7 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             <li>
               <a href="#" id="cancelNav"
                 class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white cursor-pointer">
-                Cancellation Requests
+                Refund Requests
               </a>
             </li>
             <li>
@@ -217,20 +217,26 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
           <h2 class="text-4xl font-bold text-slate-900 mb-6">Transaction Record</h2>
           <div class="mx-auto max-h-screen px-4 py-8 sm:px-8">
             <div class="overflow-y-hidden border w-full">
-              <div class="overflow-x-auto">
-                <table class="w-full text-center">
+              <div class="tx-card overflow-x-scroll">
+                <table class="tx-table w-full overflow-y-scroll max-h-screen">
                   <thead>
-                    <tr class="bg-blue-600 text-xs font-semibold uppercase tracking-widest text-white">
-                      <th class="px-5 py-3">Date</th>
-                      <th class="px-5 py-3">Product Name</th>
-                      <th class="px-5 py-3">Product ID</th>
-                      <th class="px-5 py-3">Quantity</th>
-                      <th class="px-5 py-3">Price</th>
-                      <th class="px-5 py-3">Total Sales</th>
+                    <tr class="bg-blue-700">
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Date</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Product Name</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Reference Code</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Product ID</th>
+                      <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-white">Qty</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-white">Price</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-white">Total Sales</th>
                     </tr>
                   </thead>
-                  <tbody class="text-gray-500" id="tbody"></tbody>
+                  <tbody id="tbody" class="divide-y divide-gray-100"></tbody>
                 </table>
+                <div class="flex justify-center gap-4 mt-4">
+                  <button id="prevBtn" class="text-white bg-black rounded-md shadow-xs cursor-pointer bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Prev</button>
+                  <span id="pageNumber" class="px-4 py-2">1</span>
+                  <button id="nextBtn" class="text-white bg-black rounded-md shadow-xs cursor-pointer bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Next</button>
+              </div>
               </div>
             </div>
           </div>

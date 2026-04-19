@@ -1,6 +1,7 @@
 "use strict";
 
 let products = [];
+let transaction = [];
 const loading = document.getElementById("loading");
 async function cartBtn() {
   let isLogin = await checkUserSessions();
@@ -110,25 +111,34 @@ async function getCart() {
   return await req.json();
 }
 
-function getTodayDate() {
-  const date = localStorage.getItem("date");
-  if (!date) {
-    localStorage.setItem("date", JSON.stringify(new Date().toLocaleDateString()));
-  }
-  return date;
-}
+// function getTodayDate() {
+//   const date = localStorage.getItem("date");
+//   if (!date) {
+//     localStorage.setItem("date", JSON.stringify(new Date().toLocaleDateString()));
+//   }
+//   return date;
+// }
 
-function getTransaction() {
-  const token = localStorage.getItem("token");
-  if (!token) return {};
-  const stored = localStorage.getItem(`transact_${token}`);
-  if (!stored) return {};
-  try {
-    return JSON.parse(stored);
-  } catch (err) {
-    return {};
+const getTransaction = async () => {
+  let isLogin = await checkUserSessions();
+  if (!isLogin.loggedIn) return [];
+
+  const userId = isLogin.user.ID;
+
+  const req = await fetch(`checkout.php?userId=${userId}`, {
+    method: "GET"
+  });
+
+  const res = await req.json();
+
+  if (!req.ok) {
+    console.log("Something went wrong");
+    return [];
   }
-}
+
+  console.log(res);
+  return res;
+};
 
 const checkoutForm = document.getElementById("checkOut");
 
@@ -192,33 +202,33 @@ checkoutForm.addEventListener("submit", async (e) => {
   }
 });
 
-function saveTransaction(transactionCart) {
-  const token = localStorage.getItem("token");
-  const getDate = new Date().toLocaleDateString();
+// function saveTransaction(transactionCart) {
+//   const token = localStorage.getItem("token");
+//   const getDate = new Date().toLocaleDateString();
   
 
-  const admin = JSON.parse(localStorage.getItem("transaction")) || {};
-  const key = `transact_${token}`;
-  const existing = JSON.parse(localStorage.getItem(key)) || {};
+//   const admin = JSON.parse(localStorage.getItem("transaction")) || {};
+//   const key = `transact_${token}`;
+//   const existing = JSON.parse(localStorage.getItem(key)) || {};
 
-  if (!existing[getDate]) existing[getDate] = [];
-  if (!admin[getDate]) admin[getDate] = [];
+//   if (!existing[getDate]) existing[getDate] = [];
+//   if (!admin[getDate]) admin[getDate] = [];
 
-  existing[getDate].push(...transactionCart);
-  admin[getDate].push(...transactionCart);
+//   existing[getDate].push(...transactionCart);
+//   admin[getDate].push(...transactionCart);
 
-  localStorage.setItem(`transact_${token}`, JSON.stringify(existing));
-  localStorage.setItem(`transaction`, JSON.stringify(admin));
-}
-
-
+//   localStorage.setItem(`transact_${token}`, JSON.stringify(existing));
+//   localStorage.setItem(`transaction`, JSON.stringify(admin));
+// }
 
 
-async function saveCart(cart) {
-  const token = localStorage.getItem("token");
-  localStorage.setItem(`cart_${token}`, JSON.stringify(cart));
-  updateCartCount();
-}
+
+
+// async function saveCart(cart) {
+//   const token = localStorage.getItem("token");
+//   localStorage.setItem(`cart_${token}`, JSON.stringify(cart));
+//   updateCartCount();
+// }
 
 async function updateCartCount() {
   const cart = await getCart();
@@ -450,7 +460,6 @@ document.addEventListener("click", function (e) {
 });
 
 
-
 async function renderCart() {
   let cart = await getCart();
   if (!Array.isArray(cart)) cart = [];
@@ -571,15 +580,28 @@ async function renderCart() {
   tableWrapper.parentNode.insertBefore(summaryEl, tableWrapper.nextSibling);
 }
 
-function renderTransaction() {
-  let transactionCart = getTransaction() || {};
-  const dateContainer = document.getElementById("dateContainer");
-  const transactionContainer = document.getElementById("transactionContainer");
+async function renderTransaction() {
+let transactions = await getTransaction();
+
+const dateContainer = document.getElementById("dateContainer");
+const transactionContainer = document.getElementById("transactionContainer");
+
+const grouped = transactions.reduce((acc, item) => {
+  const date = item.createdAt.split(" ")[0]; 
+
+  if (!acc[date]) {
+    acc[date] = [];
+  }
+
+  acc[date].push(item);
+  return acc;
+}, {});
+
 
   transactionContainer.innerHTML = "";
   dateContainer.innerHTML = "";
 
-  const dates = Object.keys(transactionCart);
+  const dates = Object.keys(grouped);
 
   if (dates.length === 0) {
     transactionContainer.innerHTML = `
@@ -589,59 +611,79 @@ function renderTransaction() {
       </h1>`;
     return;
   }
-
   dates.forEach((key) => {
-    dateContainer.innerHTML += `<strong>${key}</strong>`;
-    transactionCart[key].forEach((item, i) => {
-      transactionContainer.innerHTML += `
-        <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 mb-3">
-          <div class="flex items-center gap-3 flex-1 min-w-0">
-            <div class="w-16 h-16 bg-gray-50 rounded-xl p-2 shrink-0 border border-gray-100">
-              <img src='${item.productImg}' class="w-full h-full object-contain" />
-            </div>
-            <div class="min-w-0">
-              <h6 class="text-sm font-semibold text-slate-800 truncate">${item.productName}</h6>
-              <p class="text-xs text-slate-400 mt-0.5 font-medium tracking-wide uppercase">Order</p>
-              <p class="text-xs text-slate-500 mt-1 font-mono">#${item.productId}</p>
-            </div>
+
+    transactionContainer.innerHTML += `
+      <div class="mt-6 mb-3">
+        <strong class="text-lg text-slate-800">Date: ${key}</strong>
+      </div>
+    `;
+
+  grouped[key].forEach((item, i) => {
+    transactionContainer.innerHTML += `
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 mb-3">
+
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+          <div class="w-16 h-16 bg-gray-50 rounded-xl p-2 shrink-0 border border-gray-100">
+            <img src='${item.img}' class="w-full h-full object-contain" />
           </div>
-          <div class="hidden sm:block w-px h-10 bg-gray-100 shrink-0"></div>
-          <div class="flex items-center gap-5 sm:gap-6 flex-wrap sm:flex-nowrap">
-            <div class="flex flex-col gap-0.5 min-w-[52px]">
-              <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Price</span>
-              <span class="text-sm font-semibold text-slate-800">₱${Number(item.productPrice).toLocaleString()}</span>
-            </div>
-            <div class="flex flex-col gap-0.5 min-w-[36px]">
-              <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Qty</span>
-              <span class="text-sm font-semibold text-slate-800">${item.productQuantity}</span>
-            </div>
-            <div class="flex flex-col gap-0.5">
-              <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Status</span>
-              <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full py-1 px-2.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                Delivered
-              </span>
-            </div>
-            <div class="flex flex-col gap-0.5 min-w-[64px]">
-              <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Total</span>
-              <span class="text-sm font-bold text-amber-600">₱${(item.productPrice * item.productQuantity).toLocaleString()}</span>
-            </div>
+
+          <div class="min-w-0">
+            <h6 class="text-sm font-semibold text-slate-800 truncate">${item.productName}</h6>
+            <p class="text-xs text-slate-400 mt-0.5 font-medium tracking-wide uppercase">Order</p>
+            <p class="text-xs text-slate-500 mt-1 font-mono">#${item.productId}</p>
           </div>
-          <div class="hidden sm:block w-px h-10 bg-gray-100 shrink-0"></div>
-          <div class="shrink-0 w-full sm:w-auto">
-            <button
-              onclick="requestRefund('${item.productId}', '${item.productName}', ${i}, '${key}')"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 cursor-pointer bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-100 hover:border-transparent text-xs font-semibold py-2 px-4 rounded-xl transition-all duration-200 group">
-              <svg class="w-3 h-3 transition-transform duration-200 group-hover:-rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                <path d="M3 3v5h5"/>
-              </svg>
-              Request Refund
-            </button>
+        </div>
+
+        <div class="hidden sm:block w-px h-10 bg-gray-100 shrink-0"></div>
+
+        <div class="flex items-center gap-5 sm:gap-6 flex-wrap sm:flex-nowrap">
+
+          <div class="flex flex-col gap-0.5 min-w-[52px]">
+            <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Price</span>
+            <span class="text-sm font-semibold text-slate-800">₱${Number(item.price).toLocaleString()}</span>
           </div>
-        </div>`;
-    });
+
+          <div class="flex flex-col gap-0.5 min-w-[36px]">
+            <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Qty</span>
+            <span class="text-sm font-semibold text-slate-800">${item.quantity}</span>
+          </div>
+
+          <div class="flex flex-col gap-0.5">
+            <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Status</span>
+            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full py-1 px-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+              Delivered
+            </span>
+          </div>
+
+          <div class="flex flex-col gap-0.5 min-w-[64px]">
+            <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Total</span>
+            <span class="text-sm font-bold text-amber-600">₱${Number(item.total).toLocaleString()}</span>
+          </div>
+
+        </div>
+
+        <div class="hidden sm:block w-px h-10 bg-gray-100 shrink-0"></div>
+
+        <div class="shrink-0 w-full sm:w-auto">
+          <button
+            onclick="requestRefund('${item.productId}', '${item.productName}', ${i}, '${key}')"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 cursor-pointer bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-100 hover:border-transparent text-xs font-semibold py-2 px-4 rounded-xl transition-all duration-200 group">
+            
+            <svg class="w-3 h-3 transition-transform duration-200 group-hover:-rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+
+            Request Refund
+          </button>
+        </div>
+
+      </div>
+    `;
   });
+});
 }
 
 let searchValue = "";
