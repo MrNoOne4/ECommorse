@@ -128,29 +128,25 @@ const checkoutForm = document.getElementById("checkOut");
 checkoutForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const cart = getCart();
-
-  if (cart.length === 0) {
-    toast("Your cart is empty. Please add items before proceeding to checkout.", false, "#toastProceed");
-    return;
-  }
-
-  const name = document.getElementById("your_name")?.value.trim();
-  const email = document.getElementById("your_email")?.value.trim();
-  const city = document.getElementById("select-country-input-3")?.value;
-  const municipality = document.getElementById("select-municipality-input-3")?.value;
-  const phone = document.getElementById("phone-input")?.value.trim();
-  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-
-  if (!name || !email || !phone || !paymentMethod) {
-    toast("Please fill in all required fields.", false, "#toastProceed");
-    return;
-  }
-
-  const loading = document.getElementById("loading");
-  const modal = document.getElementById("containerModal");
-
   try {
+     const cart = await getCart();
+
+    if (cart.length === 0) {
+      toast("Your cart is empty. Please add items before proceeding to checkout.", false, "#toastProceed");
+      return;
+    }
+
+    const session = await checkUserSessions();
+    if (!session.loggedIn) return;
+
+    const userId = session.user.ID;
+
+    console.log(userId);
+    console.log(cart);
+
+    const loading = document.getElementById("loading");
+    const modal = document.getElementById("containerModal");
+
     loading?.classList.remove("z-[-1]");
     loading?.classList.add("z-[9999]");
 
@@ -158,7 +154,10 @@ checkoutForm.addEventListener("submit", async (e) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ name, email, city, municipality, phone, paymentMethod })
+      body: JSON.stringify({ 
+          userId,
+          cart,
+       })
     });
 
     const data = await res.json();
@@ -170,22 +169,19 @@ checkoutForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    // 🔥 smooth animation delay (success feel)
-    await new Promise(resolve => setTimeout(resolve, 800));
+    setTimeout(() => {
+        $("#loading").removeClass("z-[9999]");
+        $("#loading").addClass("z-[-1]");
+        $("#containerModal").removeClass("hidden");
+        resetCheckOutForm();
+      }, 2500);
 
-    loading?.classList.remove("z-[9999]");
-    loading?.classList.add("z-[-1]");
-
-    modal?.classList.remove("hidden");
-
-    resetCheckOutForm();
-
-    // UI refresh
      
-      await updateCartCount(),
-      await renderCart(),
-      await loadProducts(),
-      await renderOrderHistory()
+    await updateAuthButtons();
+    await loadProducts();
+    await updateCartCount();
+    await renderCart();
+    await renderTransaction();
 
 
     // const token = localStorage.getItem("token");
@@ -203,10 +199,6 @@ checkoutForm.addEventListener("submit", async (e) => {
 function saveTransaction(transactionCart) {
   const token = localStorage.getItem("token");
   const getDate = new Date().toLocaleDateString();
-
-
-
-
   
 
   const admin = JSON.parse(localStorage.getItem("transaction")) || {};
@@ -460,6 +452,8 @@ document.addEventListener("click", function (e) {
     return;
   }
 });
+
+
 
 async function renderCart() {
   let cart = await getCart();

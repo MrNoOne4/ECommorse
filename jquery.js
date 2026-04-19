@@ -308,7 +308,9 @@ function resetToggle() {
   // Load and display user's saved color preferences
   async function intitializeColors() {
     const session = await checkUserSessions();
-    const userId = session.user.ID;
+    const userId = session.user?.ID;
+    if (!userId) return;
+
     const res = await fetch("getProfile.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

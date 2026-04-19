@@ -87,7 +87,7 @@ async function validateSignUp(e) {
   displayProducts(product);
   renderTransaction();
   updateCartCount();
-  // await initializedProfile();
+  await initializedProfile();
 
   return true;
 }
