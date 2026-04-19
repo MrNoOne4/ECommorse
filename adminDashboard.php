@@ -51,7 +51,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
         to   { top: 0; opacity: 0; }
       }
 
-      /* ── EDIT MODAL OVERLAY ── */
       .overlay {
         position: fixed;
         inset: 0;
@@ -103,12 +102,10 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
   <body class="bg-slate-50 text-slate-800 min-h-screen overflow-x-hidden font-sans">
 
-    <!-- Toast -->
     <div id="snackbar" class="invisible opacity-0 fixed top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-3 rounded-md text-sm transition-all duration-300 z-[9999]"></div>
 
     <section class="grid grid-cols-[260px_1fr] min-h-screen max-lg:grid-cols-[220px_1fr] max-md:grid-cols-1">
 
-      <!-- SIDEBAR -->
       <aside
         id="dashboardNav"
         class="sticky top-0 h-screen bg-slate-900 text-white px-4 py-6 overflow-y-auto max-md:relative max-md:h-auto max-md:w-full"
@@ -144,10 +141,8 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
         </nav>
       </aside>
 
-      <!-- MAIN CONTENT -->
       <main class="bg-white p-8 max-md:p-6">
 
-        <!-- ── PRODUCTS SECTION ── -->
         <section id="productDashboard">
 
           <div class="flex justify-between items-center mb-6">
@@ -162,7 +157,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
           <h3 class="text-2xl font-semibold text-slate-700 mt-9 mb-5">Product Management (CRUD)</h3>
 
-          <!-- ADD PRODUCT FORM -->
           <form
             id="productForm"
             class="grid gap-5 mb-10 grid gap-5 mb-10 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]"
@@ -194,7 +188,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
           <h3 class="text-2xl font-semibold text-slate-700 mt-9 mb-5">Products</h3>
 
-          <!-- SEARCH & FILTER -->
           <div id="searchFilter" class="flex flex-wrap gap-4 mb-7 max-md:flex-col">
             <input type="text" id="searchInput" placeholder="Search by product name"
               class="px-4 py-3 border border-gray-300 rounded-md text-base min-w-[220px] flex-1 max-md:min-w-full outline-none focus:border-blue-400 transition-colors" />
@@ -207,7 +200,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             </select>
           </div>
 
-          <!-- PRODUCT GRID -->
           <div
             id="itemContainer"
             class="grid gap-6 max-md:grid-cols-1"
@@ -216,13 +208,11 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
         </section>
 
-        <!-- ── CANCELLATION SECTION ── -->
         <section id="cancelRecordContainer" class="h-full w-full">
           <h2 class="text-4xl font-bold text-slate-900 mb-6">Cancellation Requests</h2>
           <p class="text-slate-500">No cancellation requests yet.</p>
         </section>
 
-        <!-- ── TRANSACTIONS SECTION ── -->
         <section id="transactionContainer" class="h-full w-full">
           <h2 class="text-4xl font-bold text-slate-900 mb-6">Transaction Record</h2>
           <div class="mx-auto max-h-screen px-4 py-8 sm:px-8">
@@ -246,7 +236,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
           </div>
         </section>
 
-        <!-- ── CLEAR ALL MODAL ── -->
         <div id="myModal" class="hidden fixed z-[1000] inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center">
           <div class="bg-white rounded-lg p-6 w-[90%] max-w-sm text-center fixed top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
             <span class="close absolute top-2 right-4 text-2xl font-bold cursor-pointer">&times;</span>
@@ -265,7 +254,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
           </div>
         </div>
 
-        <!-- ── DELETE ITEM MODAL ── -->
         <div id="deleteItemModal" class="hidden fixed z-[1000] inset-0 bg-black/40 backdrop-blur-xs flex items-center h-screen justify-center">
           <div class="bg-white rounded-lg p-6 w-[90%] max-w-sm text-center fixed top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
             <span class="close absolute top-2 right-4 text-2xl font-bold cursor-pointer">&times;</span>
@@ -293,7 +281,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             <button class="close-btn text-xl text-gray-500 hover:text-black cursor-pointer" onclick="closeModal()">✖</button>
           </div>
 
-        <!-- UPDATE PRODUCT FORM — unique id (FIXED: was duplicate "productForm") -->
         <form id="productUpdateForm" class="flex flex-col p-5 gap-3" method="PATCH">
           <div class="flex justify-center items-center justify-center"><img src="" class="w-50 h-50 " id="images"></div>
           <input type="text" id="productUpdateName" placeholder="Product Name"
@@ -302,12 +289,12 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
           <select id="categoryUpdateFilter"
             class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 cursor-pointer transition-colors">
-            <option value="all">All Categories</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Foods">Foods</option>
-            <option value="Clothes">Clothes</option>
-            <option value="Shoes">Shoes</option>
-            <option value="Books">Books</option>
+              <option value="all">All Categories</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Foods">Foods</option>
+              <option value="Clothes">Clothes</option>
+              <option value="Shoes">Shoes</option>
+              <option value="Books">Books</option>
           </select>
           <input type="number" id="productUpdateQty" placeholder="Quantity"
             class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
@@ -324,9 +311,8 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
         </form>
       </div>
     </div>
-    </section><!-- end grid -->
+    </section>
 
-    <!-- ── EDIT PRODUCT MODAL (overlay wraps modal — FIXED) ── -->
 
 
     <script src="Product.js"></script>

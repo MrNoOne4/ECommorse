@@ -87,7 +87,7 @@ async function validateSignUp(e) {
   displayProducts(product);
   renderTransaction();
   updateCartCount();
-  await initializedProfile();
+  // await initializedProfile();
 
   return true;
 }
@@ -141,11 +141,13 @@ async function initializedProfile() {
 
   initial.innerHTML = firstChar;
   
+  console.log(data);
+
   profileInitial.innerHTML = firstChar;
 
 
   initial.style.color = textColor;
-  initialBackground.style.background = backgroundFirst;
+  initialBackground.style.background = `linear-gradient(45deg, ${backgroundFirst}, ${backgroundSecond})`;
   profileInitial.style.background = backgroundFirst;
   profileInitial.style.color = textColor;
 
@@ -248,7 +250,6 @@ document.querySelector("#loginForm form").addEventListener("submit", async (e) =
   if (!isValid) return;
 });
 
-// Delete the currently logged-in account
 const confirmDeletion = async () => {
   const session = await checkUserSessions();
   const req = await fetch(`profile.php`, {
@@ -297,8 +298,6 @@ document.querySelector("#deleteConfirm").addEventListener("click", async () => {
 document.addEventListener("click", async function (e) {
   const session = await checkUserSessions();
   const token = session.user;
-  console.log(token);
-
   if (!token?.ID) {
       
       return;
@@ -316,9 +315,6 @@ document.addEventListener("click", async function (e) {
 
   // NOTE: You need to define what "id" should be
   // Example: const id = token OR another stored value
- 
-    console.log(token);
-
 
   const req = await fetch(`profile.php?action=updateColor`, {
     method: "PATCH",
@@ -342,7 +338,6 @@ document.addEventListener("click", async function (e) {
   }
 
 
-  // localStorage equivalents (unchanged logic, just vanilla JS)
   // localStorage.setItem(
   //   `background_${token}`,
   //   JSON.stringify(`linear-gradient(to right, ${color1}, ${color2})`)
