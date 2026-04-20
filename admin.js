@@ -495,5 +495,87 @@ $("#nextBtn").on("click", function () {
     $("#pageNumber").text(currentPage);
 });
 
+const cancelOverlay = document.getElementById("cancelOverlay");
+
+window.openCancelModal = function () {
+  cancelOverlay.classList.add("active");
+};
+
+window.closeCancelModal = function () {
+  cancelOverlay.classList.remove("active");
+};
+
+window.viewCancellation = async function (id) {
+  const res = await fetch(`cancellationdb.php?id=${id}`);
+
+  if (!res.ok) {
+    myToast("Failed to load cancellation.", "Danger");
+    return;
+  }
+
+  const data = await res.json();
+
+  $('#images').attr('src', data.img);
+  $("#cancelName").val(data.productName);     
+  $("#productCancelPrice").val(data.price); 
+  $("#categoryCancelFilter").val(data.category);
+  $("#cancelProduct").val(data.productName);
+  $("#productCancelQty").val(data.quantity);
+  $("#cancelTotalPriceImage").val(data.price * data.quantity);
+  $("#reason").val(data.reason);
+
+  window.openCancelModal();
+
+  console.log(data);
+};
+async function displayCancellations() {
+  const res = await fetch("refund.php", {
+    method: "GET",
+  });
+
+  if (!res.ok) {
+    myToast("Failed to load cancellations.", "Danger");
+    return;
+  }
+
+  const data = await res.json();
+
+  let rows = "";
+
+  if (!data || data.length === 0) {
+    $("#cancelTbody").html(`
+      <tr>
+        <td colspan="7" class="text-center py-10 text-gray-400">
+          No cancellation requests found
+        </td>
+      </tr>
+    `);
+    return;
+  }
+
+  for (let c of data) {
+    rows += `
+      <tr class="border-b hover:bg-gray-50 transition">
+        <td class="px-6 py-4">${c.cancellationId}</td>
+        <td class="px-6 py-4 font-medium text-gray-900">${c.referenceCode}</td>
+        <td class="px-6 py-4">${c.productName}</td>
+        <td class="px-6 py-4">${c.email}</td>
+        <td class="px-6 py-4">${c.reason}</td>
+        <td class="px-6 py-4">${c.createdAt}</td>
+        <td class="px-6 py-4 text-center">
+          <button
+            onclick="viewCancellation(${c.cancellationId})"
+            class="px-4 py-2 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
+          >
+            View Details
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+
+  $("#cancelTbody").html(rows);
+}
+displayCancellations();
 
 });

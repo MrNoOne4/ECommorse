@@ -146,6 +146,14 @@ elseif ($method === "GET") {
             p.name AS productName,
             oi.quantity,
             oi.price,
+<<<<<<< HEAD
+=======
+            oi.orderItemId,
+            p.category,
+            oi.refundRequest,
+            oi.referenceCode,
+            oi.refundStatus,
+>>>>>>> c72c80e (add latest)
             oi.total,
             oi.createdAt,
             p.img

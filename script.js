@@ -111,6 +111,7 @@ async function getCart() {
   return await req.json();
 }
 
+<<<<<<< HEAD
 // function getTodayDate() {
 //   const date = localStorage.getItem("date");
 //   if (!date) {
@@ -119,6 +120,18 @@ async function getCart() {
 //   return date;
 // }
 
+=======
+
+const refundInfo = {
+  orderItemId: null,
+  userId: null,
+  productId: null,
+  referenceCode: null,
+  reason: null
+}
+
+
+>>>>>>> c72c80e (add latest)
 const getTransaction = async () => {
   let isLogin = await checkUserSessions();
   if (!isLogin.loggedIn) return [];
@@ -126,7 +139,11 @@ const getTransaction = async () => {
   const userId = isLogin.user.ID;
 
   const req = await fetch(`checkout.php?userId=${userId}`, {
+<<<<<<< HEAD
     method: "GET"
+=======
+    method: "GET",
+>>>>>>> c72c80e (add latest)
   });
 
   const res = await req.json();
@@ -431,19 +448,6 @@ document.addEventListener("click", function (e) {
     return;
   }
 
-  if (e.target && e.target.id === "closeModal") {
-    const summary = document.getElementById("cartSummary");
-    const modalContainer = document.getElementById("modalContainer");
-    if (summary) {
-      summary.classList.add("hidden");
-      summary.style.display = "none";
-    }
-    if (modalContainer) {
-      modalContainer.style.display = "none";
-    }
-    return;
-  }
-
   if (e.target && e.target.id === "checkOutBtn") {
     navigate(2);
     const summary = document.getElementById("cartSummary");
@@ -597,6 +601,11 @@ const grouped = transactions.reduce((acc, item) => {
   return acc;
 }, {});
 
+<<<<<<< HEAD
+=======
+console.log(transaction);
+
+>>>>>>> c72c80e (add latest)
 
   transactionContainer.innerHTML = "";
   dateContainer.innerHTML = "";
@@ -611,6 +620,11 @@ const grouped = transactions.reduce((acc, item) => {
       </h1>`;
     return;
   }
+<<<<<<< HEAD
+=======
+
+  console.log(transaction);
+>>>>>>> c72c80e (add latest)
   dates.forEach((key) => {
 
     transactionContainer.innerHTML += `
@@ -653,7 +667,11 @@ const grouped = transactions.reduce((acc, item) => {
             <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Status</span>
             <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full py-1 px-2.5">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+<<<<<<< HEAD
               Delivered
+=======
+                ${item.refundStatus}
+>>>>>>> c72c80e (add latest)
             </span>
           </div>
 
@@ -667,9 +685,13 @@ const grouped = transactions.reduce((acc, item) => {
         <div class="hidden sm:block w-px h-10 bg-gray-100 shrink-0"></div>
 
         <div class="shrink-0 w-full sm:w-auto">
+<<<<<<< HEAD
           <button
             onclick="requestRefund('${item.productId}', '${item.productName}', ${i}, '${key}')"
             class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 cursor-pointer bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-100 hover:border-transparent text-xs font-semibold py-2 px-4 rounded-xl transition-all duration-200 group">
+=======
+          <button onclick="requestRefund('${item.orderItemId}', '${item.productId}', '${item.productName}', '${item.referenceCode}' ,'${item.img}' ,${item.price}, '${item.category}', ${item.quantity}, ${item.total})" ${item.refundRequest ? "disabled" : ""} class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 cursor-pointer bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-100 hover:border-transparent text-xs font-semibold py-2 px-4 rounded-xl transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed" >
+>>>>>>> c72c80e (add latest)
             
             <svg class="w-3 h-3 transition-transform duration-200 group-hover:-rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
@@ -777,6 +799,121 @@ function toast(message, status, element) {
     setTimeout(() => { toastEl.classList.remove("top-10", "bg-red-500", "text-white", "z-9999"); }, 2000);
   }
 }
+
+function closeModal() {
+  const container = document.getElementById("returnContainer");
+  const modal = container.querySelector(".modal");
+  container.classList.add("opacity-0", "pointer-events-none");
+  container.classList.remove("opacity-100", "pointer-events-auto");
+
+  modal.classList.add("opacity-0", "translate-y-6");
+  modal.classList.remove("opacity-100", "translate-y-0");
+  productRefundDescription.value = "";  
+}
+
+
+
+window.requestRefund = async function (orderItemId, productCode, productName, referenceCode, img , price, category, quantity, total) {
+  document.getElementById("images").src = img;
+  document.getElementById("productRefundName").value = productName;
+  document.getElementById("productRefundPrice").value = price;
+  document.getElementById("categoryRefundFilter").value = category
+  document.getElementById("productRefundQty").value = quantity;
+  document.getElementById("productTotalPrice").value = total;
+
+  let isLogin = await checkUserSessions();
+  if (!isLogin.loggedIn) return [];
+
+  const userId = isLogin.user.ID;
+
+
+  refundInfo['orderItemId'] = orderItemId;
+  refundInfo['userId'] = userId;
+  refundInfo['productId'] = productCode;
+  refundInfo['referenceCode'] = referenceCode;
+
+  const container = document.getElementById("returnContainer");
+  const modal = container.querySelector(".modal");
+
+  container.classList.remove("opacity-0", "pointer-events-none");
+  container.classList.add("opacity-100", "pointer-events-auto");
+
+  modal.classList.remove("opacity-0", "translate-y-6");
+  modal.classList.add("opacity-100", "translate-y-0");
+
+
+};
+
+
+
+const productRefundForm = document.querySelector("#productRefundForm");
+
+
+  if (productRefundForm) {
+    productRefundForm.addEventListener("submit", async e => {
+        e.preventDefault();
+
+        const reason = document.getElementById("productRefundDescription");
+        const container = document.getElementById("returnContainer");
+        const loading = document.getElementById("returnLoading");
+        const modal = container?.querySelector(".modal");
+
+
+        if (!reason || !reason.value.trim()) {
+          toast("Please state your reason for refund", false, "#toastRemove");
+          return;
+        }
+
+        if (!container || !loading || !modal) {
+          console.error("Missing refund UI elements");
+          return;
+        }
+
+        if (!reason.value) {
+          return
+        }
+        
+        refundInfo['reason'] = reason.value;
+
+        closeModal();
+        loading.style.display = "block";
+        loading.style.zIndex = "99999";
+        console.log(refundInfo);
+        const req = await fetch ('refund.php', {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-type": "application/json"
+          },
+          body: JSON.stringify({refundInfo} )
+        })
+
+        const res = await req.json();
+
+        if (!req.ok) {
+            loading.style.display = "none";
+            loading.style.zIndex = "-1";
+          return;
+        }
+
+        await updateAuthButtons();
+        await loadProducts();
+        await updateCartCount();
+        await renderCart();
+        await renderTransaction();
+        loading.style.display = "none";
+        loading.style.zIndex = "-1";
+
+    })
+  }
+
+  
+
+
+
+
+
+
 
 
 (async () => {
