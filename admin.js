@@ -3,6 +3,7 @@ let tempId = "";
 let currentEditId = -1;
 let editingIndex = -1;
 let currentPage = 1;
+let currentCancellationId = null;
 const overlay = document.querySelector(".overlay");
 
 window.closeModal = function () {
@@ -506,6 +507,7 @@ window.closeCancelModal = function () {
 };
 
 window.viewCancellation = async function (id) {
+    currentCancellationId = id;
   const res = await fetch(`cancellationdb.php?id=${id}`);
 
   if (!res.ok) {
@@ -528,6 +530,45 @@ window.viewCancellation = async function (id) {
 
   console.log(data);
 };
+
+$("#approveBtn").click(async function () {
+  await updateRefundStatus("Accepted");
+});
+
+$("#declineBtn").click(async function () {
+  await updateRefundStatus("Decline");
+});
+
+async function updateRefundStatus(status) {
+  if (!currentCancellationId) {
+    myToast("No cancellation selected.", "Danger");
+    return;
+  }
+
+  const res = await fetch("cancellationdb.php", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: currentCancellationId,
+      status: status
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    myToast(data.message || "Failed to update status.", "Danger");
+    return;
+  }
+
+  myToast(`Request ${status}`, "Success");
+
+  window.closeCancelModal();
+  displayCancellations();
+};
+
+
+
 async function displayCancellations() {
   const res = await fetch("refund.php", {
     method: "GET",

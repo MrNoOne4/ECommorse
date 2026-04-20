@@ -27,43 +27,43 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
 
-    case "GET":
+case "GET":
 
-        $limit = 10;
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-        $offset = ($page - 1) * $limit;
+    $limit = 10;
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $offset = ($page - 1) * $limit;
 
-        $query = "
-            SELECT 
-                o.createdAt AS date,
-                p.name AS productName,
-                oi.referenceCode,
-                oi.productId,
-                oi.quantity,
-                oi.price,
-                oi.total AS totalSales
-            FROM order_items oi
-            JOIN orders o ON oi.orderId = o.orderId
-            JOIN products p ON oi.productId = p.productId
-            ORDER BY o.createdAt DESC
-            LIMIT $limit OFFSET $offset
-        ";
+    $query = "
+        SELECT 
+            o.createdAt AS date,
+            p.name AS productName,
+            oi.referenceCode,
+            oi.productId,
+            oi.quantity,
+            oi.price,
+            oi.total AS totalSales
+        FROM order_items oi
+        JOIN orders o ON oi.orderId = o.orderId
+        JOIN products p ON oi.productId = p.productId
+        ORDER BY o.createdAt DESC
+        LIMIT $limit OFFSET $offset
+    ";
 
-        $result = $db->query($query);
+    $result = $db->query($query);
 
-        if (!$result) {
-            jsonResponse(["error" => "Query failed"], 500);
-        }
+    if (!$result) {
+        jsonResponse(["error" => "Query failed"], 500);
+    }
 
-        $data = [];
+    $data = [];
 
-        while ($row = $result->fetch_assoc()) {
-            $data[] = $row;
-        }
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
 
-        jsonResponse($data);
+    jsonResponse($data);
 
-        break;
+    break;
 }
 
 $db->close();

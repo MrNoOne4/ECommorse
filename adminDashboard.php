@@ -245,6 +245,11 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             <div class="overflow-y-hidden border w-full">
               <div class="tx-card overflow-x-scroll">
                 <table class="tx-table w-full overflow-y-scroll max-h-screen h-">
+
+                <table class="tx-table w-full overflow-y-scroll max-h-screen">
+
+                <table class="tx-table w-full overflow-y-scroll max-h-screen h-">
+
                   <thead>
                     <tr class="bg-blue-700">
                       <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Date</th>
@@ -339,7 +344,7 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
             <div class="flex gap-3 mt-4">
 
-              <button type="button" id="approveBtn"
+              <button type="button" id="approveBtn" 
                 class="flex-1 py-3 bg-green-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-green-600">
                 Approve
               </button>
