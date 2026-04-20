@@ -318,7 +318,7 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             <button class="close-btn text-xl text-gray-500 hover:text-black cursor-pointer" onclick="closeModal()">✖</button>
           </div>
 
-          <form id="productUpdateForm" class="flex flex-col p-5 gap-3" method="PATCH">
+          <form  class="flex flex-col p-5 gap-3" method="PATCH">
             <div class="flex justify-center items-center justify-center">
               <img src="" class="w-50 h-50 " id="images"></div>
             <input type="text" id="cancelName" placeholder="Product Name"
@@ -353,6 +353,51 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
                 class="flex-1 py-3 bg-red-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-red-600">
                 Decline
               </button>
+
+            </div>
+          </form>
+      </div>
+    </div>
+
+      <div class="overlay fixed inset-0 bg-black/40  opacity-0 pointer-events-none transition-all backdrop-blur-xs duration-300 z-[1000]" id="UpdateOverlay">
+        <div class="modal w-[90%] max-w-md bg-white rounded-xl shadow-xl transform transition-all duration-300  translate-y-25   opacity-0 ">
+          <div class="modal-header flex text-center justify-between items-center px-5 py-4 border-b sticky top-0 bg-white z-10">
+            <h2 >Update  Product</h2>
+            <button class="close-btn text-xl text-gray-500 hover:text-black cursor-pointer" onclick="closeModalUpdate()">✖</button>
+          </div>
+
+          <form id="productUpdateForm" class="flex flex-col p-5 gap-3" method="PATCH">
+            <div class="flex justify-center items-center justify-center">
+              <img src="" class="w-50 h-50 " id="Updateimages"></div>
+            <input type="text" id="productUpdateName" placeholder="Product Name"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"/>
+            <input  id="productUpdatePrice" placeholder="Price"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
+            <select id="categoryUpdateFilter"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 cursor-pointer transition-colors">
+                <option value="all">All Categories</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Foods">Foods</option>
+                <option value="Clothes">Clothes</option>
+                <option value="Shoes">Shoes</option>
+                <option value="Books">Books</option>
+            </select>
+            <input type="number" id="productUpdateQty" placeholder="Quantity"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  />
+            <input type="text" id="productUpdateImage" placeholder="Total Price"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
+            <textarea id="productUpdateDescription" placeholder="Product Description"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  
+              style="resize:none; height:80px;"></textarea>
+
+            <div class="flex gap-3 mt-4">
+
+              <button 
+                class="flex-1 py-3 bg-blue-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-blue-600">
+                Save Changes
+              </button>
+
+
 
             </div>
           </form>

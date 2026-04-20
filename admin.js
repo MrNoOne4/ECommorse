@@ -3,8 +3,16 @@ let tempId = "";
 let currentEditId = -1;
 let editingIndex = -1;
 let currentPage = 1;
-let currentCancellationId = null;
+
+let currentCancellationId = {
+  cancelationId: null,
+  productId: null,
+  referenceCode: null
+  
+};
+
 const overlay = document.querySelector(".overlay");
+const UpdateOverlay = document.querySelector("#UpdateOverlay");
 
 window.closeModal = function () {
   overlay.classList.remove("active");
@@ -13,6 +21,15 @@ window.closeModal = function () {
 window.openModal = function () {
   overlay.classList.add("active");
 };
+
+window.closeModalUpdate = function () {
+  UpdateOverlay.classList.remove("active");
+};
+
+window.openModalUpdate = function () {
+  UpdateOverlay.classList.add("active");
+};
+
 
 $(document).ready(async function () {
 
@@ -103,8 +120,9 @@ $(document).ready(async function () {
     productFormSubmit(e);
   });
 
-  $("#productUpdateForm").submit(function (e) {
-    productUpdateFormSubmit(e);
+  $("#productUpdateForm").submit(async function (e) {
+
+    await productUpdateFormSubmit(e);
   });
 
   $("#searchInput").on("input", function () {
@@ -115,7 +133,7 @@ $(document).ready(async function () {
     displayItems();
   });
 
-  window.editProduct = async function (id) {
+  window.editProduct = async function (id) {  
     currentEditId = id;
 
     const req = await fetch(
@@ -135,10 +153,12 @@ $(document).ready(async function () {
     $("#productUpdateQty").val(result.stock);
     $("#productUpdateDescription").val(result.description);
     $("#productUpdateImage").val(result.img);
-    $("#images").attr("src", result.img);
+    $("#Updateimages").attr("src", result.img);
 
-    window.openModal();
+    window.openModalUpdate();
   };
+
+
 
   async function displayItems() {
     $("#itemContainer").html("");
@@ -422,9 +442,9 @@ async function displayTransaction(page = 1) {
 
       myToast("Product updated successfully!", "Success");
 
-      window.closeModal();
       displayItems();
       await displayTransaction();
+      window.closeModalUpdate();
     } catch (err) {
       console.error(err);
       myToast("An error occurred.", "Danger");
@@ -506,9 +526,12 @@ window.closeCancelModal = function () {
   cancelOverlay.classList.remove("active");
 };
 
-window.viewCancellation = async function (id) {
-    currentCancellationId = id;
-  const res = await fetch(`cancellationdb.php?id=${id}`);
+window.viewCancellation = async function (cancelationId, orderId, referenceCode) {
+  currentCancellationId['cancelationId'] = cancelationId;
+  currentCancellationId['productId'] = orderId;
+  currentCancellationId['referenceCode'] = referenceCode;
+
+  const res = await fetch(`cancellationdb.php?id=${cancelationId}`);
 
   if (!res.ok) {
     myToast("Failed to load cancellation.", "Danger");
@@ -527,8 +550,7 @@ window.viewCancellation = async function (id) {
   $("#reason").val(data.reason);
 
   window.openCancelModal();
-
-  console.log(data);
+  
 };
 
 $("#approveBtn").click(async function () {
@@ -540,21 +562,36 @@ $("#declineBtn").click(async function () {
 });
 
 async function updateRefundStatus(status) {
-  if (!currentCancellationId) {
+  if (!currentCancellationId.cancelationId || !currentCancellationId.productId || !currentCancellationId.referenceCode) {
     myToast("No cancellation selected.", "Danger");
     return;
   }
 
-  const res = await fetch("cancellationdb.php", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id: currentCancellationId,
-      status: status
-    })
-  });
 
-  const data = await res.json();
+  let res;
+  try {
+    res = await fetch("cancellationdb.php", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cancelationId: currentCancellationId.cancelationId,
+        productId: currentCancellationId.productId,
+        referenceCode: currentCancellationId.referenceCode,
+        status: status
+      })
+    });
+  } catch (err) {
+    myToast("Network error.", "Danger");
+    return;
+  }
+
+  let data;
+try {
+  data = await res.json();
+} catch {
+  myToast("Invalid server response.", "Danger");
+  return;
+}
 
   if (!res.ok || !data.success) {
     myToast(data.message || "Failed to update status.", "Danger");
@@ -580,7 +617,7 @@ async function displayCancellations() {
   }
 
   const data = await res.json();
-
+  
   let rows = "";
 
   if (!data || data.length === 0) {
@@ -605,7 +642,7 @@ async function displayCancellations() {
         <td class="px-6 py-4">${c.createdAt}</td>
         <td class="px-6 py-4 text-center">
           <button
-            onclick="viewCancellation(${c.cancellationId})"
+            onclick="viewCancellation(${c.cancellationId}, ${c.orderItemId}, '${c.referenceCode}')"
             class="px-4 py-2 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
           >
             View Details
