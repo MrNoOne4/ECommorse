@@ -8,7 +8,6 @@ header("Cache-Control: no-store, no-cache, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-// FIX #1: was checking $_SESSION["admin"] but login sets $_SESSION["user"] with role
 if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
     http_response_code(401);
     echo json_encode(["error" => "Unauthorized"]);

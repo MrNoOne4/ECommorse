@@ -648,7 +648,7 @@
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody class="tbody ">
+                                <tbody class="tbody">
 
                                 </tbody>
                             </table>
@@ -1148,7 +1148,7 @@
                                     </div>
 
                                 </div>
-                                <h1>Date: <span id="dateContainer"></span></h1>
+                                <h1><span id="dateContainer"></span></h1>
 
                                 <section id="transactionContainer">
 
@@ -1157,67 +1157,109 @@
                             </div>
                         </div>
 
-                        <div
-                            class="bg-black/70 fixed h-full z-999  w-full -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 hidden"
-                            id="returnContainer">
+                    <div
+                        id="returnContainer"
+                                class="bg-black/70 fixed inset-0 z-[999] opacity-0 pointer-events-none transition-opacity duration-300 flex items-center justify-center"
+                                >
 
-                            <div
-                                class="w-full max-w-sm bg-neutral-primary-soft p-6 border border-default rounded-base shadow-xs fixed -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 bg-white">
                                 <div
-                                    class=" relative text-right -top-5 -right-5">
-                                    <button id="closeReturnModal"
-                                        class="inline-flex ml-auto items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed data-[shape=pill]:rounded-full data-[width=full]:w-full focus:shadow-none text-sm rounded-md py-2 px-4 shadow-sm hover:shadow-md bg-slate-800 border-slate-800 text-slate-50 hover:bg-slate-700 hover:border-slate-700  cursor-pointer">
-                                        &times; </button>
-                                </div>
+                                    class="absolute inset-0 bg-black/40 backdrop-blur-xs"
+                                    onclick="closeModal()"
+                                ></div>
 
-                                <a href="#" class="text-center">
-                                    <img
-                                        class="rounded-base  text-center mb-6 w-1/2 h-1/2"
-                                        id="returnImg"
-                                        src
-                                        alt="product image" />
-                                </a>
-                                <div>
+                                <div
+                                    class="modal relative w-[90%] max-w-md bg-white rounded-xl shadow-xl transform transition-all duration-300 opacity-0 translate-y-6"
+                                >
 
-                                    <a href="#">
-                                        <h5
-                                            class="text-xl text-heading font-semibold tracking-tight"
-                                            id="returnName"></h5>
-                                    </a>
-
-                                    <a href="#">
-                                        <h5
-                                            class="text-xl text-heading font-semibold tracking-tight mt-4">Product
-                                            ID: <strong
-                                                id="productID"></strong></h5>
-                                    </a>
-
-                                    <div
-                                        class="flex items-center justify-between mt-6">
-                                        <span
-                                            class="text-3xl font-extrabold text-heading"
-                                            id="returnPrice"></span>
-                                        <button type="button"
-                                            onclick="continueReturn()"
-                                            class="inline-flex items-center cursor-pointer bg-black text-white bg-brand hover:bg-brand-strong box-border border border-transparent focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
-                                            <svg class="w-4 h-4 me-1.5"
-                                                aria-hidden="true"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                width="24" height="24"
-                                                fill="none"
-                                                viewBox="0 0 24 24"><path
-                                                    stroke="currentColor"
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M5 4h1.5L9 16m0 0h8m-8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-8.5-3h9.25L19 7H7.312" /></svg>
-                                            Continue Return
-                                        </button>
+                                    <div class="modal-header flex justify-between items-center px-5 py-4 border-b sticky top-0 bg-white z-10">
+                                    <h2>Product Refund</h2>
+                                    <button class="text-xl text-gray-500 hover:text-black cursor-pointer" onclick="closeModal()">✖</button>
                                     </div>
+
+                                    <form id="productRefundForm" class="flex flex-col p-5 gap-3">
+
+                                        <div class="flex justify-center" id="refundImage">
+                                            <img src="" class="w-50 h-50" id="images">
+                                        </div>
+
+                                        <input type="text" id="productRefundName" placeholder="Product Name"
+                                            class="px-4 py-3 border rounded-md outline-none focus:border-blue-400" disabled="true"/>
+
+                                        <input id="productRefundPrice" placeholder="Price"
+                                            class="px-4 py-3 border rounded-md outline-none focus:border-blue-400" disabled="true"/>
+
+                                        <select id="categoryRefundFilter"
+                                            class="px-4 py-3 border rounded-md outline-none focus:border-blue-400 cursor-pointer"  disabled="true">
+
+                                            <option value="all">All Categories</option>
+                                            <option value="Electronics">Electronics</option>
+                                            <option value="Foods">Foods</option>
+                                            <option value="Clothes">Clothes</option>
+                                            <option value="Shoes">Shoes</option>
+                                            <option value="Books">Books</option>
+
+                                        </select>
+
+                                        <input type="number" id="productRefundQty" placeholder="Quantity"
+                                            class="px-4 py-3 border rounded-md outline-none focus:border-blue-400" disabled=""true"/>
+
+                                        <input type="text" id="productTotalPrice" placeholder="Total Price"
+                                            class="px-4 py-3 border rounded-md outline-none focus:border-blue-400" disabled=""true"/>
+
+                                        <textarea id="productRefundDescription" required placeholder="Please state your reason for the refund. "
+                                            class="px-4 py-3 border rounded-md outline-none focus:border-blue-400 h-[80px] resize-none"  maxlength="255"></textarea>
+
+                                        <button type="submit"
+                                            class="py-4 bg-blue-500  cursor-pointer text-white font-semibold rounded-md hover:bg-blue-600">
+                                            Request Refund
+                                        </button>
+
+                                    </form>
                                 </div>
                             </div>
 
-                        </div>
+                            <div class="overlay fixed inset-0 bg-black/40 opacity-0 pointer-events-none transition-all backdrop-blur-xs duration-300 z-[1000]" id="cancelOverlay">
+
+                                <div class="modal w-[90%] max-w-md bg-white rounded-xl shadow-xl transform transition-all duration-300 translate-y-25 opacity-0">
+
+                                    <div class="modal-header flex justify-between items-center px-5 py-4 border-b sticky top-0 bg-white z-10">
+                                    <h2 class="text-lg font-semibold">Cancellation Request</h2>
+                                    <button class="text-xl text-gray-500 hover:text-black cursor-pointer" onclick="closeCancelModal()">✖</button>
+                                    </div>
+
+                                    <!-- CONTENT -->
+                                    <div class="flex flex-col p-5 gap-3 text-sm text-gray-700">
+
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-gray-400 text-xs">Reference Code</span>
+                                        <p id="cancelRef" class="font-semibold"></p>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-gray-400 text-xs">Product</span>
+                                        <p id="cancelProduct" class="font-medium"></p>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-gray-400 text-xs">User</span>
+                                        <p id="cancelUser"></p>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-gray-400 text-xs">Reason</span>
+                                        <p id="cancelReason" class="text-gray-600"></p>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-gray-400 text-xs">Date</span>
+                                        <p id="cancelDate"></p>
+                                    </div>
+
+                                    </div>
+
+                                </div>
+                                </div>
+
 
                         <section
                             class="h-full fixed w-full -translate-y-1/2 -translate-x-1/2 top-1/2 left-1/2 bg-black/20 z-[-1] backdrop-blur-xs"

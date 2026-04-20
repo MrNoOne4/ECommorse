@@ -122,7 +122,7 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             <li>
               <a href="#" id="cancelNav"
                 class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white cursor-pointer">
-                Cancellation Requests
+                Refund Requests
               </a>
             </li>
             <li>
@@ -208,29 +208,61 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
         </section>
 
-        <section id="cancelRecordContainer" class="h-full w-full">
-          <h2 class="text-4xl font-bold text-slate-900 mb-6">Cancellation Requests</h2>
-          <p class="text-slate-500">No cancellation requests yet.</p>
-        </section>
+        <section id="cancelRecordContainer" class="h-full w-full overflow-y-hidden">
+
+          <h2 class="text-4xl font-bold text-slate-900 mb-6">
+            Cancellation Requests
+          </h2>
+
+          <div class="overflow-x-auto bg-white rounded-xl shadow">
+            <table class="min-w-full text-sm text-left text-gray-700">
+
+              <thead class="bg-gray-100 text-gray-800 uppercase text-xs">
+                <tr>
+                  <th class="px-6 py-4">ID</th>
+                  <th class="px-6 py-4">Reference Code</th>
+                  <th class="px-6 py-4">Product</th>
+                  <th class="px-6 py-4">User</th>
+                  <th class="px-6 py-4">Reason</th>
+                  <th class="px-6 py-4">Date</th>
+                  <th class="px-6 py-4 text-center">Action</th>
+                </tr>
+              </thead>
+
+              <tbody id="cancelTbody">
+                <!-- dynamic rows here -->
+              </tbody>
+
+            </table>
+          </div>
+
+</section>
+
 
         <section id="transactionContainer" class="h-full w-full">
           <h2 class="text-4xl font-bold text-slate-900 mb-6">Transaction Record</h2>
           <div class="mx-auto max-h-screen px-4 py-8 sm:px-8">
             <div class="overflow-y-hidden border w-full">
-              <div class="overflow-x-auto">
-                <table class="w-full text-center">
+              <div class="tx-card overflow-x-scroll">
+                <table class="tx-table w-full overflow-y-scroll max-h-screen h-">
                   <thead>
-                    <tr class="bg-blue-600 text-xs font-semibold uppercase tracking-widest text-white">
-                      <th class="px-5 py-3">Date</th>
-                      <th class="px-5 py-3">Product Name</th>
-                      <th class="px-5 py-3">Product ID</th>
-                      <th class="px-5 py-3">Quantity</th>
-                      <th class="px-5 py-3">Price</th>
-                      <th class="px-5 py-3">Total Sales</th>
+                    <tr class="bg-blue-700">
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Date</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Product Name</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Reference Code</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Product ID</th>
+                      <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-white">Qty</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-white">Price</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-white">Total Sales</th>
                     </tr>
                   </thead>
-                  <tbody class="text-gray-500" id="tbody"></tbody>
+                  <tbody id="tbody" class="divide-y divide-gray-100"></tbody>
                 </table>
+                <div class="flex justify-center gap-4 mt-4">
+                  <button id="prevBtn" class="text-white bg-black rounded-md shadow-xs cursor-pointer bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Prev</button>
+                  <span id="pageNumber" class="px-4 py-2">1</span>
+                  <button id="nextBtn" class="text-white bg-black rounded-md shadow-xs cursor-pointer bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Next</button>
+              </div>
               </div>
             </div>
           </div>
@@ -274,43 +306,54 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
       </main> 
 
-      <div class="overlay fixed inset-0 bg-black/40  opacity-0 pointer-events-none transition-all backdrop-blur-xs duration-300 z-[1000]" id="editOverlay">
+      <div class="overlay fixed inset-0 bg-black/40  opacity-0 pointer-events-none transition-all backdrop-blur-xs duration-300 z-[1000]" id="cancelOverlay">
         <div class="modal w-[90%] max-w-md bg-white rounded-xl shadow-xl transform transition-all duration-300  translate-y-25   opacity-0 ">
           <div class="modal-header flex text-center justify-between items-center px-5 py-4 border-b sticky top-0 bg-white z-10">
-            <h2 >Update Product</h2>
+            <h2 >Cancelation Details Product</h2>
             <button class="close-btn text-xl text-gray-500 hover:text-black cursor-pointer" onclick="closeModal()">✖</button>
           </div>
 
-        <form id="productUpdateForm" class="flex flex-col p-5 gap-3" method="PATCH">
-          <div class="flex justify-center items-center justify-center"><img src="" class="w-50 h-50 " id="images"></div>
-          <input type="text" id="productUpdateName" placeholder="Product Name"
-            class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
-          <input  id="productUpdatePrice" placeholder="Price"
-            class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
-          <select id="categoryUpdateFilter"
-            class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 cursor-pointer transition-colors">
-              <option value="all">All Categories</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Foods">Foods</option>
-              <option value="Clothes">Clothes</option>
-              <option value="Shoes">Shoes</option>
-              <option value="Books">Books</option>
-          </select>
-          <input type="number" id="productUpdateQty" placeholder="Quantity"
-            class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
-          <input type="text" id="productUpdateImage" placeholder="Image URL"
-            class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
-          <textarea id="productUpdateDescription" placeholder="Product Description"
-            class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"
-            style="resize:none; height:80px;"></textarea>
+          <form id="productUpdateForm" class="flex flex-col p-5 gap-3" method="PATCH">
+            <div class="flex justify-center items-center justify-center">
+              <img src="" class="w-50 h-50 " id="images"></div>
+            <input type="text" id="cancelName" placeholder="Product Name"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"/>
+            <input  id="productCancelPrice" placeholder="Price"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"/>
+            <select id="categoryCancelFilter"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 cursor-pointer transition-colors" disabled="true">
+                <option value="all">All Categories</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Foods">Foods</option>
+                <option value="Clothes">Clothes</option>
+                <option value="Shoes">Shoes</option>
+                <option value="Books">Books</option>
+            </select>
+            <input type="number" id="productCancelQty" placeholder="Quantity"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"/>
+            <input type="text" id="cancelTotalPriceImage" placeholder="Total Price"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"/>
+            <textarea id="reason" placeholder="Product Description"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"
+              style="resize:none; height:80px;"></textarea>
 
-          <button type="submit"
-            class="py-4 bg-blue-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-blue-600">
-            Save Changes
-          </button>
-        </form>
+            <div class="flex gap-3 mt-4">
+
+              <button type="button" id="approveBtn"
+                class="flex-1 py-3 bg-green-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-green-600">
+                Approve
+              </button>
+
+              <button type="button" id="declineBtn"
+                class="flex-1 py-3 bg-red-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-red-600">
+                Decline
+              </button>
+
+            </div>
+          </form>
       </div>
     </div>
+    
     </section>
 
 

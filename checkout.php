@@ -1,4 +1,7 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', 0);
+
 require_once "db.php";
 session_start();
 
@@ -10,59 +13,105 @@ if (!isset($_SESSION["user"])) {
     exit;
 }
 
-$data = json_decode(file_get_contents("php://input"), true);
-
-$userId = $data['userId'];
-$cart = $data['cart'];
-
 $conn = new mysqli("localhost", "root", "M@thew11!", "ECommorse");
 
 if ($conn->connect_error) {
-    die(json_encode(["error" => "DB connection failed"]));
+    http_response_code(500);
+    echo json_encode(["error" => "DB connection failed"]);
+    exit;
 }
 
-$conn->begin_transaction();
+function generateReferenceCode() {
+    $code = "#";
+    for ($i = 0; $i < 11; $i++) {
+        $code .= random_int(0, 9);
+    }
+    return $code;
+}
+
+$conn->autocommit(false);
 
 try {
 
-    // $receipt = "R" . time();
-    // $total = 0;
+$method = $_SERVER['REQUEST_METHOD'];
 
-    // $stmt = $conn->prepare("
-    //     INSERT INTO orders (receipt, userId, total)
-    //     VALUES (?, ?, ?)
-    // ");
+if ($method === "POST") {
 
-    // $zero = 0;
-    // $stmt->bind_param("sid", $receipt, $userId, $zero);
-    // $stmt->execute();
+    $data = json_decode(file_get_contents("php://input"), true);
 
-    // $orderId = $conn->insert_id;
+    if (!$data || !isset($data['cart'])) {
+        throw new Exception("Invalid input");
+    }
+
+    $userId = $_SESSION["user"]["id"] ?? $_SESSION["user"]["ID"] ?? $_SESSION["user"]["userId"];
+
+    if (!$userId) {
+        throw new Exception("Invalid session user");
+    }
+
+    $cart = $data['cart'];
+
+    if (empty($cart)) {
+        throw new Exception("Cart is empty");
+    }
+
+    $receipt = "R-" . time();
+    $total = 0;
+
+    $orderStmt = $conn->prepare("INSERT INTO orders (receipt, userId, total) VALUES (?, ?, ?)");
+    if (!$orderStmt) throw new Exception($conn->error);
+
+    $zero = 0;
+    $orderStmt->bind_param("sid", $receipt, $userId, $zero);
+    $orderStmt->execute();
+
+    $orderId = $conn->insert_id;
 
     $itemStmt = $conn->prepare("
-        INSERT INTO order_items 
-        (userId, productId, price, quantity, total)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO order_items
+        (orderId, userId, productId, referenceCode, price, quantity, total)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
 
-    foreach ($cart as $item) {
-        $productId = $item['productId'];
-        $quantity = $item['quantity'];
-        $price = $item['productPrice'];
+    if (!$itemStmt) throw new Exception($conn->error);
 
+    foreach ($cart as $item) {
+
+        $productId = $item['productId'];
+        $quantity = $item['quantity'] ?? $item['productQuantity'];
+
+        $pstmt = $conn->prepare("SELECT price FROM products WHERE productId = ?");
+        if (!$pstmt) throw new Exception($conn->error);
+
+        $pstmt->bind_param("i", $productId);
+        $pstmt->execute();
+
+        $res = $pstmt->get_result()->fetch_assoc();
+
+        if (!$res) {
+            throw new Exception("Product not found: " . $productId);
+        }
+
+        $price = $res['price'];
         $itemTotal = $price * $quantity;
         $total += $itemTotal;
 
+        $refCode = generateReferenceCode();
+
         $itemStmt->bind_param(
-            "iiddi",
+            "iiisdid",
+            $orderId,
             $userId,
             $productId,
+            $refCode,
             $price,
             $quantity,
             $itemTotal
         );
 
-        $itemStmt->execute();
+        if (!$itemStmt->execute()) {
+            throw new Exception($itemStmt->error);
+        }
     }
 
     $update = $conn->prepare("UPDATE orders SET total = ? WHERE orderId = ?");
@@ -80,16 +129,61 @@ try {
         "orderId" => $orderId,
         "total" => $total
     ]);
-
-} catch (Exception $e) {
-    $conn->rollback();
-
-    http_response_code(500);
-    echo json_encode([
-        "error" => "Checkout failed",
-        "details" => $e->getMessage()
-    ]);
 }
 
+elseif ($method === "GET") {
 
+    $userId = $_SESSION["user"]["id"] ?? $_SESSION["user"]["ID"] ?? $_SESSION["user"]["userId"];
+
+    if (!$userId) {
+        throw new Exception("Invalid session user");
+    }
+
+    $stmt = $conn->prepare("
+        SELECT 
+            oi.userId,
+            oi.productId,
+            p.name AS productName,
+            oi.quantity,
+            oi.price,
+            oi.orderItemId,
+            p.category,
+            oi.refundRequest,
+            oi.referenceCode,
+            oi.refundStatus,
+            oi.total,
+            oi.createdAt,
+            p.img
+        FROM order_items oi
+        JOIN products p ON oi.productId = p.productId
+        WHERE oi.userId = ?
+    ");
+
+    if (!$stmt) throw new Exception($conn->error);
+
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+
+    echo json_encode($rows);
+}
+
+$conn->commit();
+
+} catch (Exception $e) {
+
+$conn->rollback();
+
+http_response_code(500);
+
+echo json_encode([
+    "error" => "Checkout failed",
+    "details" => $e->getMessage()
+]);
+
+}
+
+$conn->close();
 ?>

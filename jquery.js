@@ -189,76 +189,7 @@ function resetToggle() {
   });
 
   // Initiate product refund request
-  window.requestRefund = function (productCode, productName, index) {
-    var date = new Date().toLocaleDateString();
-    var transaction = getTransaction() || {};
-
-    var productData = transaction[date]?.[index];
-    if (!productData) return;
-
-    // Display product info in return modal
-    $("#returnImg").attr("src", productData.productImg);
-    $("#returnName").html(productData.productName);
-    $("#productID").html(productCode);
-    $("#returnPrice").html(
-      "₱" + productData.productQuantity * productData.productPrice,
-    );
-
-    // Store refund data for later use
-    window._refundData = { productCode, date, index };
-    $("#returnContainer").fadeIn(300);
-  };
-
-  // Process the refund/return transaction
-  window.continueReturn = function () {
-    const { productCode, date, index } = window._refundData;
-
-    let products = JSON.parse(localStorage.getItem("products")) || [];
-    const transactions = getTransaction() || {};
-
-    const items = transactions[date];
-
-    if (!items || !items[index]) return;
-
-    const temp = items[index];
-
-    // Find and update product stock
-    const productIndex = products.findIndex(
-      (p) => p.productCode === productCode,
-    );
-
-    if (productIndex !== -1) {
-      products[productIndex].stock += temp.productQuantity;
-      localStorage.setItem("products", JSON.stringify(products));
-    }
-
-    // Remove returned item from transaction history
-    transactions[date].splice(index, 1);
-
-    // Delete date entry if no items remain
-    if (transactions[date].length === 0) {
-      delete transactions[date];
-    }
-
-    // Save updated transactions
-    localStorage.setItem(
-      `transact_${localStorage.getItem("token")}`,
-      JSON.stringify(transactions),
-    );
-
-    // Show return success animation
-    $("#returnContainer").fadeOut(300);
-
-    setTimeout(() => {
-      $("#returnLoading").removeClass("z-[-1]").addClass("z-[9999]");
-
-      setTimeout(() => {
-        $("#returnLoading").removeClass("z-[9999]").addClass("z-[-1]");
-        showProducts(products);
-        renderTransaction();
-      }, 2500);
-    }, 300);
-  };
+ 
 
   // Close return modal
   $(document).on("click", "#closeButtonReturn, #closeIconReturn", () => {

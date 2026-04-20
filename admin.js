@@ -1,39 +1,67 @@
-// Get products and accounts from localStorage (or empty array if none)
-let arritems = []
+let arritems = [];
 let tempId = "";
 let currentEditId = -1;
-
 let editingIndex = -1;
-
+let currentPage = 1;
 const overlay = document.querySelector(".overlay");
 
 window.closeModal = function () {
   overlay.classList.remove("active");
-}
+};
 
 window.openModal = function () {
   overlay.classList.add("active");
-}
+};
 
 $(document).ready(async function () {
 
-  displayItems();
+  await displayItems();
 
-  $("#logoutNav").click(async function () {
-    if (confirm("Do you want to log out?")) {
-      const res = await fetch('logout.php');
-      const data = await res.json();
-      if (!res.ok) {
-        myToast("Logout unsuccessful!", "Danger");
-        return;
-      }
-      return (window.location.href = "index.html");
+  function myToast(message, status) {
+    const $x = $("#snackbar");
+    $x.html(message);
+
+    if (status === "Danger") {
+      $x.css("background-color", "red");
+    } else {
+      $x.css("background-color", "green");
     }
-  });
+
+    $x.addClass("show");
+
+    setTimeout(function () {
+      $x.removeClass("show");
+    }, 3000);
+  }
 
   function hideContainers() {
     $("#transactionContainer").hide();
     $("#cancelRecordContainer").hide();
+  }
+
+  function clearBtn() {
+    const hasItems = Array.isArray(arritems) && arritems.length !== 0;
+
+    if (hasItems) {
+      $("#clearStorage")
+        .show()
+        .prop("disabled", false)
+        .css("cursor", "pointer");
+    } else {
+      $("#clearStorage")
+        .hide()
+        .prop("disabled", true)
+        .css("cursor", "not-allowed");
+    }
+  }
+
+  function clearItemForm() {
+    $("#productName").val("");
+    $("#productPrice").val("");
+    $("#categoryFilter").eq(0).prop("selected", true);
+    $("#productQty").val("");
+    $("#productDescription").val("");
+    $("#productImage").val("");
   }
 
   hideContainers();
@@ -56,6 +84,20 @@ $(document).ready(async function () {
     $("#cancelRecordContainer").show();
   });
 
+  $("#logoutNav").click(async function () {
+    if (!confirm("Do you want to log out?")) return;
+
+    const res = await fetch("logout.php");
+    await res.json();
+
+    if (!res.ok) {
+      myToast("Logout unsuccessful!", "Danger");
+      return;
+    }
+
+    window.location.href = "index.html";
+  });
+
   $("#productForm").submit(function (e) {
     productFormSubmit(e);
   });
@@ -74,9 +116,10 @@ $(document).ready(async function () {
 
   window.editProduct = async function (id) {
     currentEditId = id;
-    const req = await fetch(`adminProductdb.php?id=${encodeURIComponent(id)}`, {
-      method: "GET"
-    });
+
+    const req = await fetch(
+      `adminProductdb.php?id=${encodeURIComponent(id)}`
+    );
 
     if (!req.ok) {
       myToast("Failed to fetch product.", "Danger");
@@ -92,40 +135,15 @@ $(document).ready(async function () {
     $("#productUpdateDescription").val(result.description);
     $("#productUpdateImage").val(result.img);
     $("#images").attr("src", result.img);
+
     window.openModal();
-  }
-
-  function myToast(message, status) {
-    var $x = $("#snackbar");
-    $x.html(message);
-
-    if (status === "Danger") {
-      $x.css("background-color", "red");
-    } else {
-      $x.css("background-color", "green");
-    }
-
-    $x.addClass("show");
-    setTimeout(function () { $x.removeClass("show"); }, 3000);
-  }
-
-  // FIX #7: clearBtn now properly shows/hides the button instead of only
-  // toggling disabled/cursor — users could still visually click it before.
-  function clearBtn() {
-    const hasItems = Array.isArray(arritems) && arritems.length !== 0;
-    if (hasItems) {
-      $("#clearStorage").show().prop("disabled", false).css("cursor", "pointer");
-    } else {
-      $("#clearStorage").hide().prop("disabled", true).css("cursor", "not-allowed");
-    }
-  }
+  };
 
   async function displayItems() {
     $("#itemContainer").html("");
 
     const res = await fetch(
-      `adminProductdb.php?search=${encodeURIComponent($("#searchInput").val())}&price=${encodeURIComponent($("#filterSelect").val())}`,
-      { method: "GET", headers: { "Content-Type": "application/json" } }
+      `adminProductdb.php?search=${encodeURIComponent($("#searchInput").val())}&price=${encodeURIComponent($("#filterSelect").val())}`
     );
 
     if (!res.ok) {
@@ -135,69 +153,214 @@ $(document).ready(async function () {
 
     arritems = await res.json();
 
-    if (Array.isArray(arritems) && arritems.length !== 0) {
+    if (Array.isArray(arritems) && arritems.length > 0) {
       $.each(arritems, function (index, item) {
-        let card = `
+
+        const card = `
           <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col hover:border-slate-300 hover:shadow-md transition-all duration-200">
+
             <img src="${item.img}" alt="${item.name}" class="w-full h-36 object-contain bg-slate-50 p-3">
+
             <div class="px-4 pt-3">
-              <span class="inline-block text-xs font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-800">${item.category ?? 'Product'}</span>
+              <span class="inline-block text-xs font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                ${item.category ?? "Product"}
+              </span>
             </div>
+
             <div class="flex flex-col gap-1 px-4 pt-2 pb-3 flex-1">
               <p class="text-sm font-semibold text-slate-900 m-0">${item.name}</p>
-              <p class="text-xs text-slate-500 leading-relaxed line-clamp-2 m-0">${item.description}</p>
+              <p class="text-xs text-slate-500 line-clamp-2 m-0">${item.description}</p>
+
               <div class="flex justify-between items-center mt-2">
-                <span class="text-base font-bold text-slate-900">₱${Number(item.price).toLocaleString()}</span>
-                <span class="text-xs px-2 py-1 rounded-full border ${item.stock <= 5 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">Stock: ${item.stock}</span>
+                <span class="text-base font-bold text-slate-900">
+                  ₱${Number(item.price).toLocaleString()}
+                </span>
+
+                <span class="text-xs px-2 py-1 rounded-full border ${
+                  item.stock <= 5
+                    ? "bg-red-50 text-red-700 border-red-200"
+                    : "bg-slate-100 text-slate-500 border-slate-200"
+                }">
+                  Stock: ${item.stock}
+                </span>
               </div>
             </div>
+
             <div class="flex gap-2 px-4 pb-4">
-              <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 transition-colors border-none cursor-pointer" type="button" onclick="editProduct(${item.productId})">Edit</button>
-              <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-red-100 text-red-800 hover:bg-red-200 transition-colors border-none cursor-pointer" type="button" onclick="deleteProduct(${item.productId}, '${item.name}')">Delete</button>
+              <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 border-none cursor-pointer"
+                onclick="editProduct(${item.productId})">
+                Edit
+              </button>
+
+              <button class="flex-1 py-2 text-xs font-medium rounded-lg bg-red-100 text-red-800 hover:bg-red-200 border-none cursor-pointer"
+                onclick="deleteProduct(${item.productId}, '${item.name}')">
+                Delete
+              </button>
             </div>
-          </div>`;
+
+          </div>
+        `;
+
         $("#itemContainer").append(card);
       });
+
     } else {
-      $("#itemContainer").html('<p class="text-slate-400 text-center col-span-full py-10">No products found.</p>');
+      $("#itemContainer").html(
+        '<p class="text-slate-400 text-center col-span-full py-10">No products found.</p>'
+      );
     }
 
     clearBtn();
   }
 
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) window.closeModal();
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) {
+      window.closeModal();
+    }
   });
+  
+async function getTransactionRecord(page = 1) {
+    const req = await fetch(`transactiondb.php?page=${page}`, {
+        method: "GET"
+    });
+
+    const res = await req.json();
+
+    if (!req.ok) {
+        console.log("Something went wrong");
+        return [];
+    }
+
+    return res;
+}
+
+function fmt(n) {
+  return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+}
+
+async function displayTransaction(page = 1) {
+  const transac = await getTransactionRecord(page);
+  const tbody = $("#tbody");
+
+  if (!transac || transac.length === 0) {
+    tbody.html(`
+      <tr>
+        <td colspan="7" class="text-center py-10 text-gray-400">
+          No transactions found
+        </td>
+      </tr>
+    `);
+    return;
+  }
+
+  let rows = "";
+
+  for (let trans of transac) {
+    rows += `
+      <tr class="hover:bg-blue-50 even:bg-gray-50 transition-colors">
+        <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+          ${trans.date}
+        </td>
+
+        <td class="px-4 py-3 font-medium text-gray-800">
+          ${trans.productName}
+        </td>
+
+        <td class="px-4 py-3">
+          <span class="bg-blue-50 text-blue-700 text-xs font-mono px-2 py-0.5 rounded border border-blue-200">
+            ${trans.referenceCode}
+          </span>
+        </td>
+
+        <td class="px-4 py-3 text-xs text-gray-400">
+          ${trans.productId}
+        </td>
+
+        <td class="px-4 py-3 text-center">
+          <span class="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded">
+            ${trans.quantity}
+          </span>
+        </td>
+
+        <td class="px-4 py-3 text-right text-gray-500 text-sm">
+          ${fmt(trans.price)}
+        </td>
+
+        <td class="px-4 py-3 text-right">
+          <span class="text-green-700 bg-green-50 font-medium text-sm px-2 py-0.5 rounded">
+            ${fmt(trans.totalSales)}
+          </span>
+        </td>
+      </tr>
+    `;
+  }
+
+  tbody.html(rows);
+}
+
+  displayTransaction();
 
   async function productFormSubmit(e) {
     e.preventDefault();
 
-    let name        = $("#productName").val().trim();
-    let price       = parseFloat($("#productPrice").val());
-    let category    = $("#categoryFilter").val();
-    let quantity    = parseInt($("#productQty").val());
-    let description = $("#productDescription").val().trim();
-    let imageUrl    = $("#productImage").val().trim();
+    const name = $("#productName").val().trim();
+    const price = parseFloat($("#productPrice").val());
+    const category = $("#categoryFilter").val();
+    const quantity = parseInt($("#productQty").val());
+    const description = $("#productDescription").val().trim();
+    const imageUrl = $("#productImage").val().trim();
 
-    if (name === "")               { myToast("Product Name must not be empty.", "Danger"); return; }
-    if (description === "")        { myToast("Product Description must not be empty.", "Danger"); return; }
-    if (!imageUrl)                 { myToast("Product must have an image.", "Danger"); return; }
-    if (category === "all")        { myToast("Please select a category.", "Danger"); return; }
-    if (isNaN(price) || isNaN(quantity)) { myToast("Please enter valid numbers for Price and Quantity.", "Danger"); return; }
-    if (price <= 0 || quantity <= 0)     { myToast("Price and Quantity must be greater than zero.", "Danger"); return; }
+    if (!name) {
+      myToast("Product Name must not be empty.", "Danger");
+      return;
+    }
+
+    if (!description) {
+      myToast("Product Description must not be empty.", "Danger");
+      return;
+    }
+
+    if (!imageUrl) {
+      myToast("Product must have an image.", "Danger");
+      return;
+    }
+
+    if (category === "all") {
+      myToast("Please select a category.", "Danger");
+      return;
+    }
+
+    if (isNaN(price) || isNaN(quantity)) {
+      myToast("Invalid numbers.", "Danger");
+      return;
+    }
+
+    if (price <= 0 || quantity <= 0) {
+      myToast("Must be greater than zero.", "Danger");
+      return;
+    }
 
     try {
-      const res = await fetch('adminProductdb.php', {
-        method: 'POST',
+      const res = await fetch("adminProductdb.php", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, price, category, stock: quantity, img: imageUrl, description })
+        body: JSON.stringify({
+          name,
+          price,
+          category,
+          stock: quantity,
+          img: imageUrl,
+          description
+        })
       });
 
-      if (!res.ok) { myToast("Failed to add product.", "Danger"); return; }
+      if (!res.ok) return myToast("Failed to add product.", "Danger");
 
       myToast("Product added successfully!", "Success");
+
       clearItemForm();
       displayItems();
+      await displayTransaction();
     } catch (err) {
       console.error(err);
       myToast("An error occurred.", "Danger");
@@ -207,91 +370,212 @@ $(document).ready(async function () {
   async function productUpdateFormSubmit(e) {
     e.preventDefault();
 
-    let name        = $("#productUpdateName").val().trim();
-    let price       = parseFloat($("#productUpdatePrice").val());
-    let category    = $("#categoryUpdateFilter").val();
-    let quantity    = parseInt($("#productUpdateQty").val());
-    let description = $("#productUpdateDescription").val().trim();
-    let imageUrl    = $("#productUpdateImage").val().trim();
+    const name = $("#productUpdateName").val().trim();
+    const price = parseFloat($("#productUpdatePrice").val());
+    const category = $("#categoryUpdateFilter").val();
+    const quantity = parseInt($("#productUpdateQty").val());
+    const description = $("#productUpdateDescription").val().trim();
+    const imageUrl = $("#productUpdateImage").val().trim();
+    if (!name) {
+        return myToast("Product Name must not be empty.", "Danger");
+    }
 
-    if (name === "")               { myToast("Product Name must not be empty.", "Danger"); return; }
-    if (description === "")        { myToast("Product Description must not be empty.", "Danger"); return; }
-    if (!imageUrl)                 { myToast("Product must have an image.", "Danger"); return; }
-    if (category === "all")        { myToast("Please select a category.", "Danger"); return; }
-    if (isNaN(price) || isNaN(quantity)) { myToast("Please enter valid numbers for Price and Quantity.", "Danger"); return; }
-    if (price <= 0 || quantity <= 0)     { myToast("Price and Quantity must be greater than zero.", "Danger"); return; }
+    if (!description) {
+        return myToast("Product Description must not be empty.", "Danger");
+    }
+
+    if (!imageUrl) {
+        return myToast("Product must have an image.", "Danger");
+    }
+
+    if (category === "all") {
+        return myToast("Please select a category.", "Danger");
+    }
+
+    if (isNaN(price) || isNaN(quantity)) {
+        return myToast("Invalid numbers.", "Danger");
+    }
+
+    if (price <= 0 || quantity <= 0) {
+        return myToast("Must be greater than zero.", "Danger");
+    }
 
     try {
-      const res = await fetch(`adminProductdb.php?id=${encodeURIComponent(currentEditId)}`, {
-        method: 'PATCH',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, price, category, stock: quantity, img: imageUrl, description })
-      });
+      const res = await fetch(
+        `adminProductdb.php?id=${encodeURIComponent(currentEditId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            price,
+            category,
+            stock: quantity,
+            img: imageUrl,
+            description
+          })
+        }
+      );
 
-      if (!res.ok) { myToast("Failed to update product.", "Danger"); return; }
+      if (!res.ok) return myToast("Failed to update product.", "Danger");
 
       myToast("Product updated successfully!", "Success");
+
       window.closeModal();
       displayItems();
+      await displayTransaction();
     } catch (err) {
       console.error(err);
       myToast("An error occurred.", "Danger");
     }
   }
 
-  function clearItemForm() {
-    $("#productName").val("");
-    $("#productPrice").val("");
-    $("#categoryFilter").eq(0).prop("selected", true);
-    $("#productQty").val("");
-    $("#productDescription").val("");
-    $("#productImage").val("");
-  }
-
-  $(document).on("click", "#clearStorage", () => {
-    $("#myModal").fadeIn();
-  });
-
   window.deleteProduct = function (id, productName) {
     tempId = id;
     $("#itemSelected").html(productName);
     $("#deleteItemModal").fadeIn();
-  }
+  };
 
-  $(document).on("click", ".close, #deleteItemCancel", () => {
+  $(document).on("click", ".close, #deleteItemCancel", function () {
     $("#deleteItemModal").fadeOut();
   });
 
-  $(document).on("click", "#deleteItemConfirm", async () => {
-    try {
-      const res = await fetch(`adminProductdb.php?id=${tempId}`, { method: "DELETE" });
-      if (!res.ok) { myToast("Failed to delete item.", "Danger"); return; }
-      displayItems();
-      $("#deleteItemModal").fadeOut();
-      myToast("Item Successfully Deleted", "Success");
-    } catch (error) {
-      console.log(error);
+  $(document).on("click", "#deleteItemConfirm", async function () {
+    const res = await fetch(
+      `adminProductdb.php?id=${tempId}`,
+      { method: "DELETE" }
+    );
+
+    if (!res.ok) {
+      myToast("Failed to delete item.", "Danger");
+      return;
     }
+
+    $("#deleteItemModal").fadeOut();
+    myToast("Item Successfully Deleted", "Success");
+
+    displayItems();
   });
 
-  $(document).on("click", ".close, #modalCancel", () => {
+  $(document).on("click", "#clearStorage", function () {
+    $("#myModal").fadeIn();
+  });
+
+  $(document).on("click", ".close, #modalCancel", function () {
     $("#myModal").fadeOut();
   });
 
-  // FIX #2: removed ?confirm=yes — the PHP no longer requires it
   $("#modalConfirm").click(async function () {
     $("#myModal").fadeOut();
 
-    const res = await fetch('adminProductdb.php', { method: 'DELETE' });
+    const res = await fetch("adminProductdb.php", {
+      method: "DELETE"
+    });
 
     if (!res.ok) {
-      console.error("Failed to clear storage:", res.statusText);
       myToast("Failed to clear products.", "Danger");
       return;
     }
 
-    displayItems();
     myToast("Storage cleared!", "Success");
+    displayItems();
   });
+
+  $("#prevBtn").on("click", function () {
+    if (currentPage > 1) {
+        currentPage--;
+        displayTransaction(currentPage);
+        $("#pageNumber").text(currentPage);
+    }
+});
+
+$("#nextBtn").on("click", function () {
+    currentPage++;
+    displayTransaction(currentPage);
+    $("#pageNumber").text(currentPage);
+});
+
+const cancelOverlay = document.getElementById("cancelOverlay");
+
+window.openCancelModal = function () {
+  cancelOverlay.classList.add("active");
+};
+
+window.closeCancelModal = function () {
+  cancelOverlay.classList.remove("active");
+};
+
+window.viewCancellation = async function (id) {
+  const res = await fetch(`cancellationdb.php?id=${id}`);
+
+  if (!res.ok) {
+    myToast("Failed to load cancellation.", "Danger");
+    return;
+  }
+
+  const data = await res.json();
+
+  $('#images').attr('src', data.img);
+  $("#cancelName").val(data.productName);     
+  $("#productCancelPrice").val(data.price); 
+  $("#categoryCancelFilter").val(data.category);
+  $("#cancelProduct").val(data.productName);
+  $("#productCancelQty").val(data.quantity);
+  $("#cancelTotalPriceImage").val(data.price * data.quantity);
+  $("#reason").val(data.reason);
+
+  window.openCancelModal();
+
+  console.log(data);
+};
+async function displayCancellations() {
+  const res = await fetch("refund.php", {
+    method: "GET",
+  });
+
+  if (!res.ok) {
+    myToast("Failed to load cancellations.", "Danger");
+    return;
+  }
+
+  const data = await res.json();
+
+  let rows = "";
+
+  if (!data || data.length === 0) {
+    $("#cancelTbody").html(`
+      <tr>
+        <td colspan="7" class="text-center py-10 text-gray-400">
+          No cancellation requests found
+        </td>
+      </tr>
+    `);
+    return;
+  }
+
+  for (let c of data) {
+    rows += `
+      <tr class="border-b hover:bg-gray-50 transition">
+        <td class="px-6 py-4">${c.cancellationId}</td>
+        <td class="px-6 py-4 font-medium text-gray-900">${c.referenceCode}</td>
+        <td class="px-6 py-4">${c.productName}</td>
+        <td class="px-6 py-4">${c.email}</td>
+        <td class="px-6 py-4">${c.reason}</td>
+        <td class="px-6 py-4">${c.createdAt}</td>
+        <td class="px-6 py-4 text-center">
+          <button
+            onclick="viewCancellation(${c.cancellationId})"
+            class="px-4 py-2 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
+          >
+            View Details
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+
+  $("#cancelTbody").html(rows);
+}
+displayCancellations();
 
 });
