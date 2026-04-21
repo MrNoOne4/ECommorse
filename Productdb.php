@@ -6,9 +6,6 @@ header("Content-Type: application/json");
 $dbInstance = new Database();
 $conn = $dbInstance->getConnection();
 
-if ($conn->connect_error) {
-    die(json_encode(["error" => "Connection Failed"]));
-}
 
 $sql = "SELECT * FROM products WHERE 1=1";
 $params = [];
