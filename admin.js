@@ -542,7 +542,7 @@ window.viewCancellation = async function (cancellationId, orderItemId) {
   $("#productCancelQty").val(data.quantity);
   $("#cancelTotalPriceImage").val(data.price * data.quantity);
   $("#reason").val(data.reason);
-
+  console.log(data);
   openCancelModal();
 };
 
@@ -620,7 +620,7 @@ async function displayCancellations() {
         <td class="px-6 py-4">${c.createdAt}</td>
         <td class="px-6 py-4 text-center">
           <button
-            onclick="viewCancellation(${c.cancellationId}, ${c.productId}, '${c.referenceCode}')"
+            onclick="viewCancellation(${c.cancellationId}, ${c.orderItemId})"
             class="px-4 py-2 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
           >
             View Details

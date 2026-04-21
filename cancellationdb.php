@@ -83,8 +83,8 @@ case "PATCH":
     $data = json_decode(file_get_contents("php://input"), true);
 
     $cancellationId = intval($data['cancellationId'] ?? 0);
-    $orderItemId    = intval($data['orderItemId'] ?? 0);
-    $status         = trim($data['status'] ?? '');
+    $orderItemId = intval($data['orderItemId'] ?? 0);
+    $status  = trim($data['status'] ?? '');
 
     if (!$cancellationId || !$orderItemId || !$status) {
         echo json_encode([
@@ -157,6 +157,7 @@ case "PATCH":
                 SET refundStatus = 'Refund Decline' 
                 WHERE orderItemId = ?
             ");
+            
             $stmt->bind_param("i", $orderItemId);
 
             if (!$stmt->execute()) {
