@@ -101,8 +101,6 @@ async function checkUserSessions() {
   return data;
 }
 
-
-
 // Initialize and display the user's profile in the UI
 async function initializedProfile() {
   const session = await checkUserSessions();
@@ -144,8 +142,6 @@ async function initializedProfile() {
   console.log(data);
 
   profileInitial.innerHTML = firstChar;
-
-
   initial.style.color = textColor;
   initialBackground.style.background = `linear-gradient(45deg, ${backgroundFirst}, ${backgroundSecond})`;
   profileInitial.style.background = backgroundFirst;
@@ -154,6 +150,7 @@ async function initializedProfile() {
   profile.classList.remove("hidden");
   profile.classList.add("block");
 }
+
 
 // Validate login credentials
 async function validateLogin(e) {
@@ -192,9 +189,7 @@ async function validateLogin(e) {
     return;
   }
 
-    window.location.href = "index.html";
-
-
+  window.location.href = "index.html";
   const product = await loadProducts();
   displayProducts(product);
   renderTransaction();
@@ -269,7 +264,6 @@ const confirmDeletion = async () => {
     return;
   }
 
-
   const result = await req.json();
 
   await initializedProfile();
@@ -313,8 +307,6 @@ document.addEventListener("click", async function (e) {
 
   toast("Profile Successfully changes", true, "#toast-default");
 
-  // NOTE: You need to define what "id" should be
-  // Example: const id = token OR another stored value
 
   const req = await fetch(`profile.php?action=updateColor`, {
     method: "PATCH",
@@ -337,13 +329,6 @@ document.addEventListener("click", async function (e) {
     return;
   }
 
-
-  // localStorage.setItem(
-  //   `background_${token}`,
-  //   JSON.stringify(`linear-gradient(to right, ${color1}, ${color2})`)
-  // );
-  // localStorage.setItem(`color_${token}`, JSON.stringify(value));
-
   // intitializeColors();
   await initializedProfile();
   await updateAuthButtons();
@@ -353,15 +338,6 @@ document.addEventListener("click", async function (e) {
   updateCartCount();
   renderTransaction();
 
-  // const profileContainer = document.querySelector("#profileContainer");
-  // if (profileContainer) {
-  //   profileContainer.style.transition = "opacity 0.3s ease";
-  //   profileContainer.style.opacity = "0";
-
-  //   setTimeout(() => {
-  //     profileContainer.style.display = "none";
-  //   }, 300);
-  // }
   hideChangeEmailModal();
 });
 
@@ -402,7 +378,7 @@ document.querySelector("#updateBtn").addEventListener("click", async () => {
 
   toast("Email updated!", true, "#toast-default");
 
-  await initializedProfile(); // reload UI from session
+  await initializedProfile(); 
   hideChangeEmailModal();
   document.querySelector("#newEmail").value = "";
 });

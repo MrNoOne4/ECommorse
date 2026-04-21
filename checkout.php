@@ -131,7 +131,7 @@ if ($method === "POST") {
     ]);
 }
 
-elseif ($method === "GET") {
+else if ($method === "GET") {
 
     $userId = $_SESSION["user"]["id"] ?? $_SESSION["user"]["ID"] ?? $_SESSION["user"]["userId"];
 

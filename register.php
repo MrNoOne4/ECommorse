@@ -47,7 +47,6 @@ try {
 
     $userId = $conn->insert_id;
 
-    // Insert profile
     $stmtt = $conn->prepare(
         "INSERT INTO customProfile (userId, backgroundFirst, backgroundSecond, textColor)
          VALUES (?, ?, ?, ?)"

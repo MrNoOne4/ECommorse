@@ -99,11 +99,11 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"), true);
 
-        $name        = trim($data['name'] ?? '');
-        $price       = (float)($data['price'] ?? 0);
-        $category    = (string)($data['category'] ?? '');
-        $stock       = (int)($data['stock'] ?? 0);
-        $img         = trim($data['img'] ?? '');
+        $name = trim($data['name'] ?? '');
+        $price = (float)($data['price'] ?? 0);
+        $category = (string)($data['category'] ?? '');
+        $stock = (int)($data['stock'] ?? 0);
+        $img = trim($data['img'] ?? '');
         $description = trim($data['description'] ?? '');
 
         $stmt = $db->prepare("
@@ -138,15 +138,13 @@ switch ($method) {
         }
 
         $data = json_decode(file_get_contents("php://input"), true);
-
-        $name        = $data['name']        ?? $current['name'];
-        $price       = (float)($data['price']  ?? $current['price']);
-        $category    = (string)($data['category'] ?? $current['category']);
-        $stock       = (int)($data['stock']  ?? $current['stock']);
-        $img         = $data['img']         ?? $current['img'];
+        $name = $data['name'] ?? $current['name'];
+        $price = (float)($data['price'] ?? $current['price']);
+        $category = (string)($data['category'] ?? $current['category']);
+        $stock = (int)($data['stock']  ?? $current['stock']);
+        $img = $data['img'] ?? $current['img'];
         $description = $data['description'] ?? $current['description'];
-        $id          = (int)$id;
-
+        $id = (int) $id;
         $stmt = $db->prepare("
             UPDATE products
             SET name = ?, price = ?, category = ?, stock = ?, img = ?, description = ?
@@ -166,11 +164,8 @@ switch ($method) {
             $stmt->bind_param("i", $id);
             $stmt->execute();
             $stmt->close();
-
             jsonResponse(["message" => "Product deleted", "id" => $id]);
         }
-
-
         $db->query("DELETE FROM products");
         jsonResponse(["message" => "All products deleted"]);
 

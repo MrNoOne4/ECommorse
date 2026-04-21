@@ -164,33 +164,33 @@ switch ($method) {
 
         case "PATCH":
 
-    $data = json_decode(file_get_contents("php://input"), true);
+            $data = json_decode(file_get_contents("php://input"), true);
 
-    $id = $data['id'] ?? null;
-    $status = $data['status'] ?? null;
+            $id = $data['id'] ?? null;
+            $status = $data['status'] ?? null;
 
-    if (!$id || !$status) {
-        echo json_encode([
-            "success" => false,
-            "message" => "Missing data"
-        ]);
-        exit;
-    }
+            if (!$id || !$status) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Missing data"
+                ]);
+                exit;
+            }
 
-    // get orderItemId from cancellation
-    $stmt = $conn->prepare("SELECT orderItemId FROM cancellations WHERE cancellationId = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
+        // get orderItemId from cancellation
+        $stmt = $conn->prepare("SELECT orderItemId FROM cancellations WHERE cancellationId = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
 
-    if (!$row) {
-        echo json_encode([
-            "success" => false,
-            "message" => "Cancellation not found"
-        ]);
-        exit;
-    }
+        if (!$row) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Cancellation not found"
+            ]);
+            exit;
+        }
 
     $orderItemId = $row['orderItemId'];
 
@@ -218,7 +218,6 @@ switch ($method) {
 
     break;
     
-
     default:
         echo json_encode([
             "success" => false,

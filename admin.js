@@ -510,11 +510,15 @@ async function displayTransaction(page = 1) {
     }
 });
 
-$("#nextBtn").on("click", function () {
-    currentPage++;
-    displayTransaction(currentPage);
-    $("#pageNumber").text(currentPage);
-});
+ $("#nextBtn").on("click", async function () {
+     const nextPage = currentPage + 1;
+     const data = await getTransactionRecord(nextPage);
+     if (!data || data.length === 0) return; // no more pages
+     currentPage = nextPage;
+     displayTransaction(currentPage);
+     $("#pageNumber").text(currentPage);
+ });
+
 
 const cancelOverlay = document.getElementById("cancelOverlay");
 

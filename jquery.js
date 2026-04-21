@@ -26,8 +26,6 @@ function resetToggle() {
   $("#confirmPassword").attr("type", "password");
 }
 
-
-
   // Initial setup: Hide cart summary and modal container
   $("#cartSummary").css("z-index", "-1");
   $("#modalContainer").css("display", "none");
@@ -137,45 +135,6 @@ function resetToggle() {
     checkOutForm.forEach((e) => (e.value = ""));
   }
 
-  // Handle checkout form submission
-  // $(document).on("submit", "#checkOut", async (e) => {
-  //   const cart = getCart();
-  //   e.preventDefault();
-
-  //   // Validate cart is not empty
-  //   if (cart.length === 0) {
-  //     toast(
-  //       "  Your cart is empty. Please add items before proceeding to checkout.",
-  //       false,
-  //       "#toastProceed",
-  //     );
-  //     return;
-  //   }
-
-  //   alert("hello");
-  //   $("#loading").removeClass("z-[-1]");
-  //   $("#loading").addClass("z-[9999]");
-
-  //   // Hide loading and show success modal after 2.5 seconds
-  //   setTimeout(() => {
-  //     $("#loading").removeClass("z-[9999]");
-  //     $("#loading").addClass("z-[-1]");
-  //     $("#containerModal").removeClass("hidden");
-  //     resetCheckOutForm();
-  //   }, 2500);
-
-  //   // Save transaction and clear cart from storage
-  //   saveTransaction(cart);
-  //   const token = localStorage.getItem("token");
-  //   localStorage.removeItem(`cart_${token}`);
-
-  //   // Update UI elements
-  //   updateAuthButtons();
-  //   showProducts(products);
-  //   updateCartCount();
-  //   renderCart();
-  //   renderTransaction();
-  // });
 
   // Close success modal
   $(document).on("click", "#closeButton, #closeIcon", function () {

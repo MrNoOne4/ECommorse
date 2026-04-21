@@ -6,7 +6,7 @@ header("Content-Type: application/json");
 $dbInstance = new Database();
 $db = $dbInstance->getConnection();
 
-$email = trim($_POST['email'] ?? '');
+$email = trim($_GET['email'] ?? '');
 if (empty($email)) {
     exit(json_encode(["error" => "Email is required"]));
 }
@@ -24,13 +24,8 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($row = $result->fetch_assoc()) {
-    echo json_encode([
-        "found" => true,
-        "user" => [
-            "id" => $row["id"],
-            "email" => $row["email"]
-        ]
-    ]);
+
+    echo json_encode(["found" => true, "account" => ["id" => $row["id"], "email" => $row["email"]]])
 } else {
     echo json_encode([
         "found" => false

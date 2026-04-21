@@ -7,7 +7,7 @@ class UserService {
       }
 
       const userData = await response.json();
-      return userData.found ? userData.account : null;
+      return userData.found ? true : null;
     } catch (error) {
       console.error("Error fetching user data:", error);
       return null;

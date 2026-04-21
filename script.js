@@ -59,7 +59,6 @@ function showForms() {
 const cardContainer = document.querySelector(".cardContainer");
 const tbody = document.querySelector(".tbody");
 
-let accounts = JSON.parse(localStorage.getItem("account")) || [];
 
 hidePages(0);
 
@@ -110,15 +109,6 @@ async function getCart() {
 
   return await req.json();
 }
-
-
-// function getTodayDate() {
-//   const date = localStorage.getItem("date");
-//   if (!date) {
-//     localStorage.setItem("date", JSON.stringify(new Date().toLocaleDateString()));
-//   }
-//   return date;
-// }
 
 
 
@@ -217,33 +207,7 @@ checkoutForm.addEventListener("submit", async (e) => {
   }
 });
 
-// function saveTransaction(transactionCart) {
-//   const token = localStorage.getItem("token");
-//   const getDate = new Date().toLocaleDateString();
-  
 
-//   const admin = JSON.parse(localStorage.getItem("transaction")) || {};
-//   const key = `transact_${token}`;
-//   const existing = JSON.parse(localStorage.getItem(key)) || {};
-
-//   if (!existing[getDate]) existing[getDate] = [];
-//   if (!admin[getDate]) admin[getDate] = [];
-
-//   existing[getDate].push(...transactionCart);
-//   admin[getDate].push(...transactionCart);
-
-//   localStorage.setItem(`transact_${token}`, JSON.stringify(existing));
-//   localStorage.setItem(`transaction`, JSON.stringify(admin));
-// }
-
-
-
-
-// async function saveCart(cart) {
-//   const token = localStorage.getItem("token");
-//   localStorage.setItem(`cart_${token}`, JSON.stringify(cart));
-//   updateCartCount();
-// }
 
 async function updateCartCount() {
   const cart = await getCart();
@@ -599,11 +563,6 @@ const grouped = transactions.reduce((acc, item) => {
   return acc;
 }, {});
 
-console.log(transaction);
-
-
-
-
 
   transactionContainer.innerHTML = "";
   dateContainer.innerHTML = "";
@@ -620,7 +579,6 @@ console.log(transaction);
   }
 
 
-  console.log(transaction);
   dates.forEach((key) => {
 
     transactionContainer.innerHTML += `
@@ -663,7 +621,7 @@ console.log(transaction);
             <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Status</span>
             <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full py-1 px-2.5">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                ${item.refundStatus}
+                ${item.refundStatus ?? 'Completed'}
     
             </span>
           </div>
@@ -676,13 +634,8 @@ console.log(transaction);
         </div>
 
         <div class="hidden sm:block w-px h-10 bg-gray-100 shrink-0"></div>
-
         <div class="shrink-0 w-full sm:w-auto">
-
-
           <button onclick="requestRefund('${item.orderItemId}', '${item.productId}', '${item.productName}', '${item.referenceCode}' ,'${item.img}' ,${item.price}, '${item.category}', ${item.quantity}, ${item.total})" ${item.refundRequest ? "disabled" : ""} class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 cursor-pointer bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-100 hover:border-transparent text-xs font-semibold py-2 px-4 rounded-xl transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed" >
-
-            
             <svg class="w-3 h-3 transition-transform duration-200 group-hover:-rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
               <path d="M3 3v5h5"/>
@@ -868,7 +821,6 @@ const productRefundForm = document.querySelector("#productRefundForm");
         closeModal();
         loading.style.display = "block";
         loading.style.zIndex = "99999";
-        console.log(refundInfo);
         const req = await fetch ('refund.php', {
           method: "POST",
           credentials: "include",
@@ -898,12 +850,6 @@ const productRefundForm = document.querySelector("#productRefundForm");
   }
 
   
-
-
-
-
-
-
 
 
 (async () => {

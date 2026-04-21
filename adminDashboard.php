@@ -4,14 +4,11 @@ session_start();
   header("Pragma: no-cache"); 
   header("Expires: 0");
   
-if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
-    http_response_code(401);
-    echo json_encode(["error" => "Unauthorized"]);
-    exit;
-}
-
-
-
+  if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
+      http_response_code(401);
+      echo json_encode(["error" => "Unauthorized"]);
+      exit;
+  }
 ?>
 
 <!DOCTYPE html>
@@ -405,9 +402,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
     </div>
     
     </section>
-
-
-
     <script src="Product.js"></script>
     <script src="admin.js"></script>
   </body>
