@@ -1,7 +1,10 @@
 <?php
+require_once "db.php";
+
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "M@thew11!", "ECommorse");
+$dbInstance = new Database();
+$conn = $dbInstance->getConnection();
 
 if ($conn->connect_error) {
     die(json_encode(["error" => "Connection Failed"]));

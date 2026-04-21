@@ -6,7 +6,8 @@ header("Cache-Control: no-store, no-cache, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-$conn = new mysqli("localhost", "root", "M@thew11!", "ECommorse");
+$dbInstance = new Database();
+$conn = $dbInstance->getConnection();
 
 if ($conn->connect_error) {
     http_response_code(500);

@@ -5,7 +5,7 @@ session_start();
 header("Content-Type: application/json");
 
 $dbInstance = new Database();
-$db = $dbInstance->getConnection();
+$conn = $dbInstance->getConnection();
 
 if (!isset($_SESSION["user"])) {
     http_response_code(401);

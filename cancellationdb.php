@@ -3,13 +3,11 @@ require_once "db.php";
 
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "M@thew11!", "ECommorse");
 
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(["error" => "DB connection failed"]);
-    exit;
-}
+
+$dbInstance = new Database();
+$conn = $dbInstance->getConnection();
+
 
 $method = $_SERVER['REQUEST_METHOD'];
 
