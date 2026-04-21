@@ -1,11 +1,14 @@
 <?php
+require_once "db.php";
+
 session_start();
 header("Content-Type: application/json");
 header("Cache-Control: no-store, no-cache, must-revalidate");
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$conn = new mysqli("localhost", "root", "M@thew11!", "ECommorse");
+$dbInstance = new Database();
+$conn = $dbInstance->getConnection();
 
 if ($conn->connect_error) {
     http_response_code(500);
