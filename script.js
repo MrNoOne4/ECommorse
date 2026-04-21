@@ -141,7 +141,6 @@ const getTransaction = async () => {
     return [];
   }
 
-  console.log(res);
   return res;
 };
 
@@ -845,6 +844,7 @@ const productRefundForm = document.querySelector("#productRefundForm");
         await renderTransaction();
         loading.style.display = "none";
         loading.style.zIndex = "-1";
+        toast("Refund successfully requested", true, "#toastRemove");
 
     })
   }

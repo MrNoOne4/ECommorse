@@ -164,8 +164,11 @@ switch ($method) {
             $stmt->bind_param("i", $id);
             $stmt->execute();
             $stmt->close();
+
             jsonResponse(["message" => "Product deleted", "id" => $id]);
         }
+
+
         $db->query("DELETE FROM products");
         jsonResponse(["message" => "All products deleted"]);
 

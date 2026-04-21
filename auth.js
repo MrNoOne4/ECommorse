@@ -139,7 +139,6 @@ async function initializedProfile() {
 
   initial.innerHTML = firstChar;
   
-  console.log(data);
 
   profileInitial.innerHTML = firstChar;
   initial.style.color = textColor;

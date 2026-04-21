@@ -5,10 +5,8 @@ let editingIndex = -1;
 let currentPage = 1;
 
 let currentCancellationId = {
-  cancelationId: null,
-  productId: null,
-  referenceCode: null
-  
+  cancellationId: null,
+  orderItemId: null
 };
 
 const overlay = document.querySelector(".overlay");
@@ -530,31 +528,22 @@ window.closeCancelModal = function () {
   cancelOverlay.classList.remove("active");
 };
 
-window.viewCancellation = async function (cancelationId, orderId, referenceCode) {
-  currentCancellationId['cancelationId'] = cancelationId;
-  currentCancellationId['productId'] = orderId;
-  currentCancellationId['referenceCode'] = referenceCode;
+window.viewCancellation = async function (cancellationId, orderItemId) {
+  currentCancellationId.cancellationId = cancellationId;
+  currentCancellationId.orderItemId = orderItemId;
 
-  const res = await fetch(`cancellationdb.php?id=${cancelationId}`);
-
-  if (!res.ok) {
-    myToast("Failed to load cancellation.", "Danger");
-    return;
-  }
-
+  const res = await fetch(`cancellationdb.php?id=${cancellationId}`);
   const data = await res.json();
 
   $('#images').attr('src', data.img);
-  $("#cancelName").val(data.productName);     
-  $("#productCancelPrice").val(data.price); 
+  $("#cancelName").val(data.productName);
+  $("#productCancelPrice").val(data.price);
   $("#categoryCancelFilter").val(data.category);
-  $("#cancelProduct").val(data.productName);
   $("#productCancelQty").val(data.quantity);
   $("#cancelTotalPriceImage").val(data.price * data.quantity);
   $("#reason").val(data.reason);
 
-  window.openCancelModal();
-  
+  openCancelModal();
 };
 
 $("#approveBtn").click(async function () {
@@ -566,36 +555,22 @@ $("#declineBtn").click(async function () {
 });
 
 async function updateRefundStatus(status) {
-  if (!currentCancellationId.cancelationId || !currentCancellationId.productId || !currentCancellationId.referenceCode) {
+  if (!currentCancellationId.cancellationId || !currentCancellationId.orderItemId) {
     myToast("No cancellation selected.", "Danger");
     return;
   }
 
+  const res = await fetch("cancellationdb.php", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cancellationId: currentCancellationId.cancellationId,
+      orderItemId: currentCancellationId.orderItemId,
+      status: status
+    })
+  });
 
-  let res;
-  try {
-    res = await fetch("cancellationdb.php", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cancelationId: currentCancellationId.cancelationId,
-        productId: currentCancellationId.productId,
-        referenceCode: currentCancellationId.referenceCode,
-        status: status
-      })
-    });
-  } catch (err) {
-    myToast("Network error.", "Danger");
-    return;
-  }
-
-  let data;
-try {
-  data = await res.json();
-} catch {
-  myToast("Invalid server response.", "Danger");
-  return;
-}
+  const data = await res.json();
 
   if (!res.ok || !data.success) {
     myToast(data.message || "Failed to update status.", "Danger");
@@ -604,10 +579,9 @@ try {
 
   myToast(`Request ${status}`, "Success");
 
-  window.closeCancelModal();
+  closeCancelModal();
   displayCancellations();
-};
-
+}
 
 
 async function displayCancellations() {
@@ -646,7 +620,7 @@ async function displayCancellations() {
         <td class="px-6 py-4">${c.createdAt}</td>
         <td class="px-6 py-4 text-center">
           <button
-            onclick="viewCancellation(${c.cancellationId}, ${c.orderItemId}, '${c.referenceCode}')"
+            onclick="viewCancellation(${c.cancellationId}, ${c.productId}, '${c.referenceCode}')"
             class="px-4 py-2 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
           >
             View Details
