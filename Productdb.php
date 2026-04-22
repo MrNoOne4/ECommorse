@@ -6,8 +6,8 @@ header("Content-Type: application/json");
 $dbInstance = new Database();
 $conn = $dbInstance->getConnection();
 
-
 $sql = "SELECT * FROM products WHERE 1=1";
+
 $params = [];
 $types = "";
 
@@ -26,6 +26,8 @@ if (!empty($category) && $category !== 'all') {
     $types   .= "s";
 }
 
+$sql .= " ORDER BY productId DESC";
+
 $stmt = $conn->prepare($sql);
 
 if (!empty($params)) {
@@ -42,5 +44,7 @@ while ($row = $result->fetch_assoc()) {
 
 echo json_encode($products);
 
+
+$stmt->close();
 $conn->close();
 ?>

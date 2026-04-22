@@ -28,73 +28,77 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
 
     case 'GET':
-        $id = $_GET['id'] ?? null;
+    $id = $_GET['id'] ?? null;
 
-        if (!empty($id)) {
-            $stmt = $db->prepare("SELECT * FROM products WHERE productId = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-
-            $result = $stmt->get_result();
-            $product = $result->fetch_assoc();
-
-            $stmt->close();
-
-            if ($product) {
-                echo json_encode($product);
-            } else {
-                http_response_code(404);
-                echo json_encode(["error" => "Product not found"]);
-            }
-            exit;
-        }
-
-        $sql = "SELECT * FROM products WHERE 1=1";
-        $params = [];
-        $types = "";
-
-        $price = $_GET['price'] ?? '';
-        $search = $_GET['search'] ?? '';
-
-        if (!empty($search)) {
-            $sql .= " AND name LIKE ?";
-            $params[] = "%" . $search . "%";
-            $types .= "s";
-        }
-
-        if (!empty($price) && in_array($price, ['Low', 'Medium', 'High'])) {
-            if ($price === 'Low') {
-                $sql .= " AND price < ?";
-                $params[] = 100;
-                $types .= "i";
-            } elseif ($price === 'Medium') {
-                $sql .= " AND price BETWEEN ? AND ?";
-                $params[] = 100;
-                $params[] = 500;
-                $types .= "ii";
-            } elseif ($price === 'High') {
-                $sql .= " AND price > ?";
-                $params[] = 500;
-                $types .= "i";
-            }
-        }
-
-        $stmt = $db->prepare($sql);
-
-        if (!empty($params)) {
-            $stmt->bind_param($types, ...$params);
-        }
-
+    if (!empty($id)) {
+        $stmt = $db->prepare("SELECT * FROM products WHERE productId = ?");
+        $stmt->bind_param("i", $id);
         $stmt->execute();
-        $result = $stmt->get_result();
 
-        $products = [];
-        while ($row = $result->fetch_assoc()) {
-            $products[] = $row;
-        }
+        $result = $stmt->get_result();
+        $product = $result->fetch_assoc();
+
         $stmt->close();
-        echo json_encode($products);
+
+        if ($product) {
+            echo json_encode($product);
+        } else {
+            http_response_code(404);
+            echo json_encode(["error" => "Product not found"]);
+        }
         exit;
+    }
+
+    $sql = "SELECT * FROM products WHERE 1=1";
+    $params = [];
+    $types = "";
+
+    $price = $_GET['price'] ?? '';
+    $search = $_GET['search'] ?? '';
+
+    if (!empty($search)) {
+        $sql .= " AND name LIKE ?";
+        $params[] = "%" . $search . "%";
+        $types .= "s";
+    }
+
+    if (!empty($price) && in_array($price, ['Low', 'Medium', 'High'])) {
+        if ($price === 'Low') {
+            $sql .= " AND price < ?";
+            $params[] = 100;
+            $types .= "i";
+        } elseif ($price === 'Medium') {
+            $sql .= " AND price BETWEEN ? AND ?";
+            $params[] = 100;
+            $params[] = 500;
+            $types .= "ii";
+        } elseif ($price === 'High') {
+            $sql .= " AND price > ?";
+            $params[] = 500;
+            $types .= "i";
+        }
+    }
+
+    $sql .= " ORDER BY productId DESC";
+
+    $stmt = $db->prepare($sql);
+
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $products = [];
+    while ($row = $result->fetch_assoc()) {
+        $products[] = $row;
+    }
+
+    $stmt->close();
+    echo json_encode($products);
+    exit;
+
 
     case 'POST':
         $data = json_decode(file_get_contents("php://input"), true);
