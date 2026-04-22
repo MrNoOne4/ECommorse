@@ -44,7 +44,7 @@ case "GET":
             oi.total AS totalSales
         FROM order_items oi
         JOIN orders o ON oi.orderId = o.orderId
-        JOIN products p ON oi.productId = p.productId
+        JOIN products p ON oi.productId = p.productId AND (oi.refundStatus = 'Pending' OR oi.refundStatus = 'Delivered' OR oi.refundStatus = 'Refund Decline') 
         ORDER BY o.createdAt DESC
         LIMIT $limit OFFSET $offset
     ";

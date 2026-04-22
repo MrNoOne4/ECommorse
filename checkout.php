@@ -139,6 +139,7 @@ else if ($method === "GET") {
         SELECT 
             oi.userId,
             oi.productId,
+            oi.orderId,
             p.name AS productName,
             oi.quantity,
             oi.price,
@@ -153,6 +154,7 @@ else if ($method === "GET") {
         FROM order_items oi
         JOIN products p ON oi.productId = p.productId
         WHERE oi.userId = ?
+        ORDER BY oi.createdAt DESC
     ");
 
     if (!$stmt) throw new Exception($conn->error);

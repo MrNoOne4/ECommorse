@@ -85,14 +85,11 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
         opacity: 1;
       }
 
-
-
       .modal-header h2 {
         margin: 0;
         font-size: 18px;
         font-weight: 600;
       }
-
 
       .close-btn:hover { color: #000; }
     </style>
@@ -108,33 +105,52 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
         id="dashboardNav"
         class="sticky top-0 h-screen bg-slate-900 text-white px-4 py-6 overflow-y-auto max-md:relative max-md:h-auto max-md:w-full"
       >
-        <h2 class="text-2xl font-bold text-slate-200 mb-8 text-center">Admin Panel</h2>
+        <h2 class="text-2xl font-bold text-slate-200 mb-8 text-center">
+          Admin Panel
+        </h2>
+
         <nav>
           <ul class="list-none space-y-2 p-0 m-0">
+
             <li>
+              <!-- FIX: was #productNav — kept the same, matches JS -->
               <a href="#" id="productNav"
-                class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white cursor-pointer">
+                class="nav-link text-slate-300 block px-5 py-3 rounded-md hover:bg-slate-800 hover:text-white">
                 Products
               </a>
             </li>
+
             <li>
+              <!-- FIX: was #refundNav — renamed to #cancelNav to match JS -->
               <a href="#" id="cancelNav"
-                class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white cursor-pointer">
+                class="nav-link text-slate-300 block px-5 py-3 rounded-md hover:bg-slate-800 hover:text-white">
                 Refund Requests
               </a>
             </li>
+
             <li>
+              <!-- FIX: was #historyNav — renamed to #transactionHistory to match JS -->
+              <a href="#" id="transactionHistory"
+                class="nav-link text-slate-300 block px-5 py-3 rounded-md hover:bg-slate-800 hover:text-white">
+                Transaction History
+              </a>
+            </li>
+
+            <li>
+              <!-- FIX: was #transactionNav — kept the same, matches JS -->
               <a href="#" id="transactionNav"
-                class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white cursor-pointer">
+                class="nav-link text-slate-300 block px-5 py-3 rounded-md hover:bg-slate-800 hover:text-white">
                 Transaction Record
               </a>
             </li>
+
             <li>
-              <a id="logoutNav"
-                class="text-slate-300 no-underline block px-5 py-3 rounded-md transition-all duration-200 hover:bg-slate-800 hover:text-white cursor-pointer">
+              <a href="#" id="logoutNav"
+                class="nav-link text-slate-300 block px-5 py-3 rounded-md hover:bg-slate-800 hover:text-white">
                 Logout
               </a>
             </li>
+
           </ul>
         </nav>
       </aside>
@@ -157,7 +173,7 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
           <form
             id="productForm"
-            class="grid gap-5 mb-10 grid gap-5 mb-10 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]"
+            class="grid gap-5 mb-10 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]"
             method="POST"
           >
             <input type="text" id="productName" placeholder="Product Name" class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
@@ -217,7 +233,7 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
               <thead class="bg-gray-100 text-gray-800 uppercase text-xs">
                 <tr>
-                  <th class="px-6 py-4">ID</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">ID</th>
                   <th class="px-6 py-4">Reference Code</th>
                   <th class="px-6 py-4">Product</th>
                   <th class="px-6 py-4">User</th>
@@ -228,26 +244,56 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
               </thead>
 
               <tbody id="cancelTbody">
-                <!-- dynamic rows here -->
               </tbody>
 
-            </table>
+              </table>
+
+              
           </div>
 
-</section>
+        </section>
 
 
+        <section id="transactionHistorySection" class="h-full w-full">
+          <h2 class="text-4xl font-bold text-slate-900 mb-6">Transaction Refund History</h2>
+          <div class="mx-auto max-h-screen px-4 py-8 sm:px-8">
+            <div class="overflow-y-hidden border w-full">
+              <div class="tx-card overflow-x-scroll">
+                <table class="tx-table w-full overflow-y-scroll max-h-screen">
+                  <thead>
+                    <tr class="bg-blue-700">
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Date</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Product Name</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Reference Code</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">User</th>
+                      <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-white">Qty</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-white">Price</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-white">Total Price</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-white">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyHistory" class="divide-y divide-gray-100">
+
+                  </tbody>
+                </table>
+                
+                <div class="flex justify-center gap-4 mt-4">
+                  <button id="prevBtnHistory" class="text-white bg-black rounded-md cursor-pointer font-medium text-sm px-4 py-2.5">Prev</button>
+                  <span id="pageNumberHistory" class="px-4 py-2">1</span>
+                  <button id="nextBtnHistory" class="text-white bg-black rounded-md cursor-pointer font-medium text-sm px-4 py-2.5">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Transaction Record Section -->
         <section id="transactionContainer" class="h-full w-full">
           <h2 class="text-4xl font-bold text-slate-900 mb-6">Transaction Record</h2>
           <div class="mx-auto max-h-screen px-4 py-8 sm:px-8">
             <div class="overflow-y-hidden border w-full">
               <div class="tx-card overflow-x-scroll">
-                <table class="tx-table w-full overflow-y-scroll max-h-screen h-">
-
                 <table class="tx-table w-full overflow-y-scroll max-h-screen">
-
-                <table class="tx-table w-full overflow-y-scroll max-h-screen h-">
-
                   <thead>
                     <tr class="bg-blue-700">
                       <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white">Date</th>
@@ -261,11 +307,13 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
                   </thead>
                   <tbody id="tbody" class="divide-y divide-gray-100"></tbody>
                 </table>
+
                 <div class="flex justify-center gap-4 mt-4">
-                  <button id="prevBtn" class="text-white bg-black rounded-md shadow-xs cursor-pointer bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Prev</button>
+                  <button id="prevBtn" class="text-white bg-black rounded-md cursor-pointer font-medium text-sm px-4 py-2.5">Prev</button>
                   <span id="pageNumber" class="px-4 py-2">1</span>
-                  <button id="nextBtn" class="text-white bg-black rounded-md shadow-xs cursor-pointer bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Next</button>
-              </div>
+                  <button id="nextBtn" class="text-white bg-black rounded-md cursor-pointer font-medium text-sm px-4 py-2.5">Next</button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -309,22 +357,23 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
 
       </main> 
 
-      <div class="overlay fixed inset-0 bg-black/40  opacity-0 pointer-events-none transition-all backdrop-blur-xs duration-300 z-[1000]" id="cancelOverlay">
-        <div class="modal w-[90%] max-w-md bg-white rounded-xl shadow-xl transform transition-all duration-300  translate-y-25   opacity-0 ">
+      <div class="overlay fixed inset-0 bg-black/40 opacity-0 pointer-events-none transition-all backdrop-blur-xs duration-300 z-[1000]" id="cancelOverlay">
+        <div class="modal w-[90%] max-w-md bg-white rounded-xl shadow-xl transform transition-all duration-300 translate-y-25 opacity-0">
           <div class="modal-header flex text-center justify-between items-center px-5 py-4 border-b sticky top-0 bg-white z-10">
-            <h2 >Cancelation Details Product</h2>
-            <button class="close-btn text-xl text-gray-500 hover:text-black cursor-pointer" onclick="closeModal()">✖</button>
+            <h2>Cancellation Details</h2>
+            <button class="close-btn text-xl text-gray-500 hover:text-black cursor-pointer" onclick="closeCancelModal()">✖</button>
           </div>
 
-          <form  class="flex flex-col p-5 gap-3" method="PATCH">
-            <div class="flex justify-center items-center justify-center">
-              <img src="" class="w-50 h-50 " id="images"></div>
+          <form class="flex flex-col p-5 gap-3" method="PATCH">
+            <div class="flex justify-center items-center">
+              <img src="" class="w-50 h-50" id="images">
+            </div>
             <input type="text" id="cancelName" placeholder="Product Name"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"/>
-            <input  id="productCancelPrice" placeholder="Price"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"/>
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" disabled/>
+            <input id="productCancelPrice" placeholder="Price"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" disabled/>
             <select id="categoryCancelFilter"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 cursor-pointer transition-colors" disabled="true">
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 cursor-pointer transition-colors" disabled>
                 <option value="all">All Categories</option>
                 <option value="Electronics">Electronics</option>
                 <option value="Foods">Foods</option>
@@ -333,44 +382,42 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
                 <option value="Books">Books</option>
             </select>
             <input type="number" id="productCancelQty" placeholder="Quantity"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"/>
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" disabled/>
             <input type="text" id="cancelTotalPriceImage" placeholder="Total Price"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"/>
-            <textarea id="reason" placeholder="Product Description"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  disabled="true"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" disabled/>
+            <textarea id="reason" placeholder="Reason"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" disabled
               style="resize:none; height:80px;"></textarea>
 
             <div class="flex gap-3 mt-4">
-
               <button type="button" id="approveBtn" 
                 class="flex-1 py-3 bg-green-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-green-600">
                 Approve
               </button>
-
               <button type="button" id="declineBtn"
                 class="flex-1 py-3 bg-red-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-red-600">
                 Decline
               </button>
-
             </div>
           </form>
+        </div>
       </div>
-    </div>
 
-      <div class="overlay fixed inset-0 bg-black/40  opacity-0 pointer-events-none transition-all backdrop-blur-xs duration-300 z-[1000]" id="UpdateOverlay">
-        <div class="modal w-[90%] max-w-md bg-white rounded-xl shadow-xl transform transition-all duration-300  translate-y-25   opacity-0 ">
+      <div class="overlay fixed inset-0 bg-black/40 opacity-0 pointer-events-none transition-all backdrop-blur-xs duration-300 z-[1000]" id="UpdateOverlay">
+        <div class="modal w-[90%] max-w-md bg-white rounded-xl shadow-xl transform transition-all duration-300 translate-y-25 opacity-0">
           <div class="modal-header flex text-center justify-between items-center px-5 py-4 border-b sticky top-0 bg-white z-10">
-            <h2 >Update  Product</h2>
+            <h2>Update Product</h2>
             <button class="close-btn text-xl text-gray-500 hover:text-black cursor-pointer" onclick="closeModalUpdate()">✖</button>
           </div>
 
           <form id="productUpdateForm" class="flex flex-col p-5 gap-3" method="PATCH">
-            <div class="flex justify-center items-center justify-center">
-              <img src="" class="w-50 h-50 " id="Updateimages"></div>
+            <div class="flex justify-center items-center">
+              <img src="" class="w-50 h-50" id="Updateimages">
+            </div>
             <input type="text" id="productUpdateName" placeholder="Product Name"
               class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"/>
-            <input  id="productUpdatePrice" placeholder="Price"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
+            <input id="productUpdatePrice" placeholder="Price"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"/>
             <select id="categoryUpdateFilter"
               class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 cursor-pointer transition-colors">
                 <option value="all">All Categories</option>
@@ -381,26 +428,22 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
                 <option value="Books">Books</option>
             </select>
             <input type="number" id="productUpdateQty" placeholder="Quantity"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  />
-            <input type="text" id="productUpdateImage" placeholder="Total Price"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors" />
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"/>
+            <input type="text" id="productUpdateImage" placeholder="Image URL"
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"/>
             <textarea id="productUpdateDescription" placeholder="Product Description"
-              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"  
+              class="px-4 py-3 border border-slate-300 rounded-md text-base outline-none focus:border-blue-400 transition-colors"
               style="resize:none; height:80px;"></textarea>
 
             <div class="flex gap-3 mt-4">
-
               <button 
                 class="flex-1 py-3 bg-blue-500 text-white font-semibold rounded-md border-none cursor-pointer transition-colors duration-200 hover:bg-blue-600">
                 Save Changes
               </button>
-
-
-
             </div>
           </form>
+        </div>
       </div>
-    </div>
     
     </section>
     <script src="Product.js"></script>

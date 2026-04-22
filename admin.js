@@ -3,6 +3,7 @@ let tempId = "";
 let currentEditId = -1;
 let editingIndex = -1;
 let currentPage = 1;
+let currentHistoryPage = 1;
 
 let currentCancellationId = {
   cancellationId: null,
@@ -82,23 +83,50 @@ $(document).ready(async function () {
 
   hideContainers();
 
-  $("#productNav").click(function () {
-    $("#productDashboard").show();
-    $("#transactionContainer").hide();
-    $("#cancelRecordContainer").hide();
-  });
+  // --- Navigation ---
 
-  $("#transactionNav").click(function () {
-    $("#productDashboard").hide();
-    $("#transactionContainer").show();
-    $("#cancelRecordContainer").hide();
-  });
-
-  $(document).on("click", "#cancelNav", function () {
+  function hideAllSections() {
     $("#productDashboard").hide();
     $("#transactionContainer").hide();
-    $("#cancelRecordContainer").show();
+    // FIX: was "#transactionHistorySection" but section ID in HTML was "transactionHistory" —
+    // now both are aligned: HTML id="transactionHistorySection", JS targets "#transactionHistorySection"
+    $("#transactionHistorySection").hide();
+    $("#cancelRecordContainer").hide();
+  }
+
+  function showSection(section) {
+    hideAllSections();
+    $(section).show();
+  }
+
+  hideAllSections();
+  $("#productDashboard").show();
+
+  $("#productNav").click(function (e) {
+    e.preventDefault();
+    showSection("#productDashboard");
   });
+
+  $("#transactionNav").click(function (e) {
+    e.preventDefault();
+    showSection("#transactionContainer");
+    displayTransaction(currentPage);
+  });
+
+  // FIX: listener now targets the nav link ID "#transactionHistory"
+  // which matches the HTML nav <a id="transactionHistory">
+  $("#transactionHistory").click(function (e) {
+    e.preventDefault();
+    showSection("#transactionHistorySection");
+  });
+
+  // FIX: listener targets "#cancelNav" which matches the HTML nav <a id="cancelNav">
+  $("#cancelNav").click(function (e) {
+    e.preventDefault();
+    showSection("#cancelRecordContainer");
+    displayCancellations();
+  });
+
 
   $("#logoutNav").click(async function () {
     if (!confirm("Do you want to log out?")) return;
@@ -119,7 +147,6 @@ $(document).ready(async function () {
   });
 
   $("#productUpdateForm").submit(async function (e) {
-
     await productUpdateFormSubmit(e);
   });
 
@@ -230,6 +257,7 @@ $(document).ready(async function () {
     }
 
     clearBtn();
+    displayHistory();
   }
 
   overlay.addEventListener("click", function (e) {
@@ -238,7 +266,7 @@ $(document).ready(async function () {
     }
   });
   
-async function getTransactionRecord(page = 1) {
+  async function getTransactionRecord(page = 1) {
     const req = await fetch(`transactiondb.php?page=${page}`, {
         method: "GET"
     });
@@ -251,71 +279,132 @@ async function getTransactionRecord(page = 1) {
     }
 
     return res;
-}
+  }
 
-function fmt(n) {
-  return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2 });
-}
+  async function getTransactionHistoryRecord(page = 1) {
+    const req = await fetch(`getHistoryRefund.php?page=${page}`, {
+        method: "GET"
+    });
 
-async function displayTransaction(page = 1) {
-  const transac = await getTransactionRecord(page);
-  const tbody = $("#tbody");
+    const res = await req.json();
 
-  if (!transac || transac.length === 0) {
+    if (!req.ok) {
+        console.log("Something went wrong");
+        return [];
+    }
+
+    return res;
+  }
+
+  function fmt(n) {
+    return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+  }
+
+  
+async function displayHistoryTransaction(page = 1) {
+  const result = await getTransactionHistoryRecord(page);
+
+  if (!result) return;
+
+  const data = result.data;
+  const tbody = $("#tbodyHistory");
+
+  if (!Array.isArray(data) || data.length === 0) {
     tbody.html(`
       <tr>
-        <td colspan="7" class="text-center py-10 text-gray-400">
-          No transactions found
+        <td colspan="8" class="text-center py-10 text-gray-400">
+          No transaction history found
         </td>
       </tr>
     `);
-    return;
+    return null;
   }
 
   let rows = "";
 
-  for (let trans of transac) {
+  for (let c of data) {
     rows += `
-      <tr class="hover:bg-blue-50 even:bg-gray-50 transition-colors">
-        <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-          ${trans.date}
-        </td>
-
-        <td class="px-4 py-3 font-medium text-gray-800">
-          ${trans.productName}
-        </td>
-
-        <td class="px-4 py-3">
-          <span class="bg-blue-50 text-blue-700 text-xs font-mono px-2 py-0.5 rounded border border-blue-200">
-            ${trans.referenceCode}
-          </span>
-        </td>
-
-        <td class="px-4 py-3 text-xs text-gray-400">
-          ${trans.productId}
-        </td>
-
-        <td class="px-4 py-3 text-center">
-          <span class="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded">
-            ${trans.quantity}
-          </span>
-        </td>
-
-        <td class="px-4 py-3 text-right text-gray-500 text-sm">
-          ${fmt(trans.price)}
-        </td>
-
-        <td class="px-4 py-3 text-right">
-          <span class="text-green-700 bg-green-50 font-medium text-sm px-2 py-0.5 rounded">
-            ${fmt(trans.totalSales)}
-          </span>
-        </td>
+      <tr>
+        <td>${c.date}</td>
+        <td>${c.productName}</td>
+        <td>${c.referenceCode}</td>
+        <td>${c.email}</td>
+        <td class="text-center">${c.quantity ?? 1}</td>
+        <td class="text-right">${c.price ?? 0}</td>
+        <td class="text-right">${c.totalSales ?? 0}</td>
+        <td class="text-right">${c.refundStatus ?? "Pending"}</td>
       </tr>
     `;
   }
 
   tbody.html(rows);
+
+  $("#pageNumberHistory").text(page);
+
+  return data; 
 }
+
+
+
+  async function displayTransaction(page = 1) {
+    const transac = await getTransactionRecord(page);
+    const tbody = $("#tbody");
+
+    if (!transac || transac.length === 0) {
+      tbody.html(`
+        <tr>
+          <td colspan="7" class="text-center py-10 text-gray-400">
+            No transactions found
+          </td>
+        </tr>
+      `);
+      return;
+    }
+
+    let rows = "";
+
+    for (let trans of transac) {
+      rows += `
+        <tr class="hover:bg-blue-50 even:bg-gray-50 transition-colors">
+          <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+            ${trans.date}
+          </td>
+
+          <td class="px-4 py-3 font-medium text-gray-800">
+            ${trans.productName}
+          </td>
+
+          <td class="px-4 py-3">
+            <span class="bg-blue-50 text-blue-700 text-xs font-mono px-2 py-0.5 rounded border border-blue-200">
+              ${trans.referenceCode}
+            </span>
+          </td>
+
+          <td class="px-4 py-3 text-xs text-gray-400">
+            ${trans.productId}
+          </td>
+
+          <td class="px-4 py-3 text-center">
+            <span class="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded">
+              ${trans.quantity}
+            </span>
+          </td>
+
+          <td class="px-4 py-3 text-right text-gray-500 text-sm">
+            ${fmt(trans.price)}
+          </td>
+
+          <td class="px-4 py-3 text-right">
+            <span class="text-green-700 bg-green-50 font-medium text-sm px-2 py-0.5 rounded">
+              ${fmt(trans.totalSales)}
+            </span>
+          </td>
+        </tr>
+      `;
+    }
+
+    tbody.html(rows);
+  }
 
   displayTransaction();
 
@@ -395,6 +484,7 @@ async function displayTransaction(page = 1) {
     const quantity = parseInt($("#productUpdateQty").val());
     const description = $("#productUpdateDescription").val().trim();
     const imageUrl = $("#productUpdateImage").val().trim();
+
     if (!name) {
         return myToast("Product Name must not be empty.", "Danger");
     }
@@ -506,132 +596,200 @@ async function displayTransaction(page = 1) {
         displayTransaction(currentPage);
         $("#pageNumber").text(currentPage);
     }
-});
-
- $("#nextBtn").on("click", async function () {
-     const nextPage = currentPage + 1;
-     const data = await getTransactionRecord(nextPage);
-     if (!data || data.length === 0) return; // no more pages
-     currentPage = nextPage;
-     displayTransaction(currentPage);
-     $("#pageNumber").text(currentPage);
- });
-
-
-const cancelOverlay = document.getElementById("cancelOverlay");
-
-window.openCancelModal = function () {
-  cancelOverlay.classList.add("active");
-};
-
-window.closeCancelModal = function () {
-  cancelOverlay.classList.remove("active");
-};
-
-window.viewCancellation = async function (cancellationId, orderItemId) {
-  currentCancellationId.cancellationId = cancellationId;
-  currentCancellationId.orderItemId = orderItemId;
-
-  const res = await fetch(`cancellationdb.php?id=${cancellationId}`);
-  const data = await res.json();
-
-  $('#images').attr('src', data.img);
-  $("#cancelName").val(data.productName);
-  $("#productCancelPrice").val(data.price);
-  $("#categoryCancelFilter").val(data.category);
-  $("#productCancelQty").val(data.quantity);
-  $("#cancelTotalPriceImage").val(data.price * data.quantity);
-  $("#reason").val(data.reason);
-  console.log(data);
-  openCancelModal();
-};
-
-$("#approveBtn").click(async function () {
-  await updateRefundStatus("Accepted");
-});
-
-$("#declineBtn").click(async function () {
-  await updateRefundStatus("Decline");
-});
-
-async function updateRefundStatus(status) {
-  if (!currentCancellationId.cancellationId || !currentCancellationId.orderItemId) {
-    myToast("No cancellation selected.", "Danger");
-    return;
-  }
-
-  const res = await fetch("cancellationdb.php", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      cancellationId: currentCancellationId.cancellationId,
-      orderItemId: currentCancellationId.orderItemId,
-      status: status
-    })
   });
 
-  const data = await res.json();
+  $("#prevBtnHistory").on("click", function () {
+    if (currentHistoryPage > 1) {
+      currentHistoryPage--;
+      displayHistoryTransaction(currentHistoryPage);
+    }
+  });
 
-  if (!res.ok || !data.success) {
-    myToast(data.message || "Failed to update status.", "Danger");
-    return;
+
+  $("#nextBtn").on("click", async function () {
+    const nextPage = currentPage + 1;
+    const data = await getTransactionRecord(nextPage);
+    if (!data || data.length === 0) return;
+    currentPage = nextPage;
+    displayTransaction(currentPage);
+    $("#pageNumber").text(currentPage);
+  });
+
+  $("#nextBtnHistory").on("click", async function () {
+    const nextPage = currentHistoryPage + 1;
+    const data = await getTransactionHistoryRecord(nextPage);
+    if (!data || !data.data || data.data.length === 0) return;
+    currentHistoryPage = nextPage;
+    displayHistoryTransaction(currentHistoryPage);
+  });
+
+
+
+  const cancelOverlay = document.getElementById("cancelOverlay");
+
+  window.openCancelModal = function () {
+    cancelOverlay.classList.add("active");
+  };
+
+  window.closeCancelModal = function () {
+    cancelOverlay.classList.remove("active");
+  };
+
+  window.viewCancellation = async function (cancellationId, orderItemId) {
+    currentCancellationId.cancellationId = cancellationId;
+    currentCancellationId.orderItemId = orderItemId;
+
+    const res = await fetch(`cancellationdb.php?id=${cancellationId}`);
+    const data = await res.json();
+
+    $('#images').attr('src', data.img);
+    $("#cancelName").val(data.productName);
+    $("#productCancelPrice").val(data.price);
+    $("#categoryCancelFilter").val(data.category);
+    $("#productCancelQty").val(data.quantity);
+    $("#cancelTotalPriceImage").val(data.price * data.quantity);
+    $("#reason").val(data.reason);
+    openCancelModal();
+  };
+
+  $("#approveBtn").click(async function () {
+    await updateRefundStatus("Accepted");
+  });
+
+  $("#declineBtn").click(async function () {
+    await updateRefundStatus("Decline");
+  });
+
+  async function updateRefundStatus(status) {
+    if (!currentCancellationId.cancellationId || !currentCancellationId.orderItemId) {
+      myToast("No cancellation selected.", "Danger");
+      return;
+    }
+
+    const res = await fetch("cancellationdb.php", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cancellationId: currentCancellationId.cancellationId,
+        orderItemId: currentCancellationId.orderItemId,
+        status: status
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      myToast(data.message || "Failed to update status.", "Danger");
+      return;
+    }
+
+    myToast(`Request ${status}`, "Success");
+
+    closeCancelModal();
+    displayHistory();
+    displayCancellations();
   }
 
-  myToast(`Request ${status}`, "Success");
 
-  closeCancelModal();
-  displayCancellations();
-}
+  async function displayCancellations() {
+    const res = await fetch("refund.php", {
+      method: "GET",
+    });
 
+    if (!res.ok) {
+      myToast("Failed to load cancellations.", "Danger");
+      return;
+    }
 
-async function displayCancellations() {
-  const res = await fetch("refund.php", {
+    const data = await res.json();
+
+    console.log(data);
+    let rows = "";
+
+    if (!data || data.length === 0) {
+      $("#cancelTbody").html(`
+        <tr>
+          <td colspan="7" class="text-center py-10 text-gray-400">
+            No cancellation requests found
+          </td>
+        </tr>
+      `);
+      return;
+    }
+
+    for (let c of data) {
+      rows += `
+        <tr class="border-b hover:bg-gray-50 transition">
+          <td class="px-6 py-4">${c.cancellationId}</td>
+          <td class="px-6 py-4 font-medium text-gray-900">${c.referenceCode}</td>
+          <td class="px-6 py-4">${c.product}</td>
+          <td class="px-6 py-4">${c.user}</td>
+          <td class="px-6 py-4">${c.reason}</td>
+          <td class="px-6 py-4">${c.date}</td>
+          <td class="px-6 py-4 text-center">
+            <button
+              onclick="viewCancellation(${c.cancellationId}, ${c.orderItemId})"
+              class="px-4 py-2 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
+            >
+              View Details
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+
+    $("#cancelTbody").html(rows);
+  }
+
+async function displayHistory() {
+  const res = await fetch("getHistoryRefund.php", {
     method: "GET",
   });
 
   if (!res.ok) {
-    myToast("Failed to load cancellations.", "Danger");
+    myToast("Failed to load history.", "Danger");
     return;
   }
 
-  const data = await res.json();
-  
-  let rows = "";
+  const result = await res.json();
+  const data = result.data;
 
-  if (!data || data.length === 0) {
-    $("#cancelTbody").html(`
+  console.log(result);
+
+  if (!Array.isArray(data) || data.length === 0) {
+    $("#tbodyHistory").html(`
       <tr>
-        <td colspan="7" class="text-center py-10 text-gray-400">
-          No cancellation requests found
+        <td colspan="8" class="text-center py-10 text-gray-400">
+          No transaction history found
         </td>
       </tr>
     `);
     return;
   }
 
+  let rows = "";
+
   for (let c of data) {
     rows += `
       <tr class="border-b hover:bg-gray-50 transition">
-        <td class="px-6 py-4">${c.cancellationId}</td>
-        <td class="px-6 py-4 font-medium text-gray-900">${c.referenceCode}</td>
-        <td class="px-6 py-4">${c.productName}</td>
-        <td class="px-6 py-4">${c.email}</td>
-        <td class="px-6 py-4">${c.reason}</td>
-        <td class="px-6 py-4">${c.createdAt}</td>
-        <td class="px-6 py-4 text-center">
-          <button
-            onclick="viewCancellation(${c.cancellationId}, ${c.orderItemId})"
-            class="px-4 py-2 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
-          >
-            View Details
-          </button>
-        </td>
+        <td class="px-4  py-3">${c.date}</td>
+        <td class="px-4  py-3">${c.productName}</td>
+        <td class="px-4  py-3">${c.referenceCode}</td>
+        <td class="px-4  py-3">${c.email}</td>
+        <td class="px-4  py-3 text-center">${c.quantity ?? 1}</td>
+        <td class="px-4  py-3 text-right">${c.price ?? 0}</td>
+        <td class="px-4  py-3 text-right">${c.totalSales ?? 0}</td>
+        <td class="px-4  py-3 text-right">${c.refundStatus ?? "Pending"}</td>
       </tr>
     `;
   }
 
-  $("#cancelTbody").html(rows);
+  $("#tbodyHistory").html(rows);
 }
-displayCancellations();
 
+
+
+  displayCancellations();
+  displayHistory();
+  displayHistoryTransaction(1);
 });

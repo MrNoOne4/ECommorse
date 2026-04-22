@@ -42,13 +42,39 @@ switch ($method) {
         exit;
     }
 
-    $result = $conn->query("
-        SELECT c.*, u.email, p.name AS productName
-        FROM cancellations c
-        JOIN Users u ON c.userId = u.id
-        JOIN products p ON c.productId = p.productId
-        ORDER BY c.createdAt DESC
-    ");
+        // $result = $conn->query("
+        //     SELECT 
+        //         c.cancellationId AS id,
+        //         oi.referenceCode,
+        //         p.name AS product,
+        //         u.email AS user,
+        //         c.reason,
+        //         c.createdAt AS date,
+        //         oi.refundStatus AS action
+        //     FROM cancellations c
+        //     JOIN order_items oi ON c.orderItemId = oi.orderItemId
+        //     JOIN Users u ON oi.userId = u.id
+        //     JOIN products p ON oi.productId = p.productId AND oi.refundStatus = 'Pending'
+        //     ORDER BY c.createdAt DESC
+        // ");
+
+
+        $result = $conn->query("
+            SELECT 
+                c.cancellationId,
+                c.orderItemId,
+                oi.referenceCode,
+                p.name AS product,
+                u.email AS user,
+                c.reason,
+                c.createdAt AS date,
+                oi.refundStatus AS status
+            FROM cancellations c
+            JOIN order_items oi ON c.orderItemId = oi.orderItemId
+            JOIN Users u ON oi.userId = u.id
+            JOIN products p ON oi.productId = p.productId AND oi.refundStatus = 'Pending'
+            ORDER BY c.createdAt DESC
+        ");
 
     $rows = [];
 

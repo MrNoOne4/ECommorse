@@ -546,28 +546,21 @@ async function renderCart() {
 }
 
 async function renderTransaction() {
-let transactions = [...(await getTransaction())].reverse();
-const dateContainer = document.getElementById("dateContainer");
-const transactionContainer = document.getElementById("transactionContainer");
-
-const grouped = transactions.reduce((acc, item) => {
-  const date = item.createdAt.split(" ")[0]; 
-
-  if (!acc[date]) {
-    acc[date] = [];
-  }
-
-  acc[date].push(item);
-  return acc;
-}, {});
-
-
+  let transactions = [...(await getTransaction())].reverse();
+  const transactionContainer = document.getElementById("transactionContainer");
   transactionContainer.innerHTML = "";
-  dateContainer.innerHTML = "";
 
-  const dates = Object.keys(grouped);
+  const grouped = transactions.reduce((acc, item) => {
+    const key = item.orderId;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
 
-  if (dates.length === 0) {
+  const orderIds = Object.keys(grouped).sort((a, b) => b - a);
+
+
+  if (orderIds.length === 0) {
     transactionContainer.innerHTML = `
       <h1 class="text-center text-2xl">
         🛒 Your Transaction cart is empty.
@@ -576,77 +569,84 @@ const grouped = transactions.reduce((acc, item) => {
     return;
   }
 
+  orderIds.forEach((orderId) => {
+    const items = grouped[orderId];
+    const date = items[0].createdAt.split(" ")[0];
+    const itemCount = items.length;
 
-  dates.forEach((key) => {
+    const orderGroup = document.createElement("div");
+    orderGroup.className = "mb-6 border border-gray-200 rounded-2xl overflow-hidden shadow-sm";
 
-    transactionContainer.innerHTML += `
-      <div class="mt-6 mb-3">
-        <strong class="text-lg text-slate-800">Date: ${key}</strong>
+    // Order header
+    orderGroup.innerHTML = `
+      <div class="flex items-center justify-between bg-gray-50 px-5 py-3 border-b border-gray-200">
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-bold text-slate-700">Order #${orderId}</span>
+          <span class="text-xs text-slate-400">${date}</span>
+        </div>
+        <span class="text-xs bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full">
+          ${itemCount} item${itemCount > 1 ? "s" : ""}
+        </span>
       </div>
+      <div class="order-items-list divide-y divide-gray-100"></div>
     `;
 
-  grouped[key].forEach((item, i) => {
-    transactionContainer.innerHTML += `
-      <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 mb-3">
+    const itemsList = orderGroup.querySelector(".order-items-list");
 
+    items.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white hover:bg-gray-50 transition-all duration-200";
+      row.innerHTML = `
         <div class="flex items-center gap-3 flex-1 min-w-0">
           <div class="w-16 h-16 bg-gray-50 rounded-xl p-2 shrink-0 border border-gray-100">
             <img src='${item.img}' class="w-full h-full object-contain" />
           </div>
-
           <div class="min-w-0">
             <h6 class="text-sm font-semibold text-slate-800 truncate">${item.productName}</h6>
-            <p class="text-xs text-slate-400 mt-0.5 font-medium tracking-wide uppercase">Order</p>
-            <p class="text-xs text-slate-500 mt-1 font-mono">#${item.productId}</p>
+            <p class="text-xs text-slate-400 mt-0.5 font-mono">#${item.productId}</p>
           </div>
         </div>
-
-        <div class="hidden sm:block w-px h-10 bg-gray-100 shrink-0"></div>
 
         <div class="flex items-center gap-5 sm:gap-6 flex-wrap sm:flex-nowrap">
-
           <div class="flex flex-col gap-0.5 min-w-[52px]">
-            <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Price</span>
+            <span class="text-xs font-semibold uppercase tracking-widest text-slate-400">Price</span>
             <span class="text-sm font-semibold text-slate-800">₱${Number(item.price).toLocaleString()}</span>
           </div>
-
           <div class="flex flex-col gap-0.5 min-w-[36px]">
-            <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Qty</span>
+            <span class="text-xs font-semibold uppercase tracking-widest text-slate-400">Qty</span>
             <span class="text-sm font-semibold text-slate-800">${item.quantity}</span>
           </div>
-
           <div class="flex flex-col gap-0.5">
-            <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Status</span>
+            <span class="text-xs font-semibold uppercase tracking-widest text-slate-400">Status</span>
             <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full py-1 px-2.5">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                ${item.refundStatus ?? 'Completed'}
-    
+              ${item.refundStatus ?? "Completed"}
             </span>
           </div>
-
           <div class="flex flex-col gap-0.5 min-w-[64px]">
-            <span class="text-md font-semibold uppercase tracking-widest text-slate-400">Total</span>
+            <span class="text-xs font-semibold uppercase tracking-widest text-slate-400">Total</span>
             <span class="text-sm font-bold text-amber-600">₱${Number(item.total).toLocaleString()}</span>
           </div>
-
         </div>
 
-        <div class="hidden sm:block w-px h-10 bg-gray-100 shrink-0"></div>
         <div class="shrink-0 w-full sm:w-auto">
-          <button onclick="requestRefund('${item.orderItemId}', '${item.productId}', '${item.productName}', '${item.referenceCode}' ,'${item.img}' ,${item.price}, '${item.category}', ${item.quantity}, ${item.total})" ${item.refundRequest ? "disabled" : ""} class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 cursor-pointer bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-100 hover:border-transparent text-xs font-semibold py-2 px-4 rounded-xl transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed" >
-            <svg class="w-3 h-3 transition-transform duration-200 group-hover:-rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <button
+            onclick="requestRefund('${item.orderItemId}', '${item.productId}', '${item.productName}', '${item.referenceCode}', '${item.img}', ${item.price}, '${item.category}', ${item.quantity}, ${item.total})"
+            ${item.refundRequest ? "disabled" : ""}
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 cursor-pointer bg-red-50 hover:bg-red-500 text-red-500 hover:text-white border border-red-100 hover:border-transparent text-xs font-semibold py-2 px-4 rounded-xl transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
               <path d="M3 3v5h5"/>
             </svg>
-
             Request Refund
           </button>
         </div>
+      `;
+      itemsList.appendChild(row);
+    });
 
-      </div>
-    `;
+    transactionContainer.appendChild(orderGroup);
   });
-});
 }
 
 let searchValue = "";
