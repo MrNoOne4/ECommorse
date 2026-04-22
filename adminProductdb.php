@@ -156,23 +156,28 @@ switch ($method) {
 
         jsonResponse(["message" => "Product updated successfully"]);
 
-    case 'DELETE':
-        $id = $_GET['id'] ?? null;
+        case 'DELETE':
+            $id = $_GET['id'] ?? null;
 
-        if (!empty($id)) {
-            $stmt = $db->prepare("DELETE FROM products WHERE productId = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-            $stmt->close();
+            if ($id !== null && is_numeric($id)) {
+                $id = (int)$id;
 
-            jsonResponse(["message" => "Product deleted", "id" => $id]);
-        }
+                $stmt = $db->prepare("DELETE FROM products WHERE productId = ?");
+                $stmt->bind_param("i", $id);
+                $stmt->execute();
 
+                if ($stmt->affected_rows === 0) {
+                    jsonResponse(["error" => "Product not found"], 404);
+                }
 
-        $db->query("DELETE FROM products");
-        jsonResponse(["message" => "All products deleted"]);
+                $stmt->close();
+                jsonResponse(["message" => "Product deleted", "id" => $id]);
+            }
 
-    default:
+            $db->query("DELETE FROM products");
+            jsonResponse(["message" => "All products deleted"]);
+
+            default:    
         jsonResponse(["error" => "Method not allowed"], 405);
 }
 

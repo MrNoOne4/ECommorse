@@ -546,8 +546,7 @@ async function renderCart() {
 }
 
 async function renderTransaction() {
-let transactions = await getTransaction();
-
+let transactions = [...(await getTransaction())].reverse();
 const dateContainer = document.getElementById("dateContainer");
 const transactionContainer = document.getElementById("transactionContainer");
 

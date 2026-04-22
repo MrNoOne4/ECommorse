@@ -13,13 +13,9 @@ if (!isset($_SESSION["user"])) {
     exit;
 }
 
-$conn = new mysqli("localhost", "root", "M@thew11!", "ECommorse");
+$dbInstance = new Database();
+$conn = $dbInstance->getConnection();
 
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(["error" => "DB connection failed"]);
-    exit;
-}
 
 function generateReferenceCode() {
     $code = "#";
