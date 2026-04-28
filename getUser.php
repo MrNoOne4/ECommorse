@@ -7,6 +7,7 @@ $dbInstance = new Database();
 $db = $dbInstance->getConnection();
 
 $email = trim($_GET['email'] ?? '');
+
 if (empty($email)) {
     exit(json_encode(["error" => "Email is required"]));
 }
@@ -19,6 +20,7 @@ if (!$stmt) {
 }
 
 $stmt->bind_param("s", $email);
+
 $stmt->execute();
 
 $result = $stmt->get_result();

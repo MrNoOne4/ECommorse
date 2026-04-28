@@ -16,7 +16,6 @@ class Database {
         );
 
         if ($this->connection->connect_error) {
-            // FIX: Don't expose raw DB error to client
             http_response_code(500);
             echo json_encode(["error" => "Database connection failed"]);
             exit;
