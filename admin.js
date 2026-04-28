@@ -135,7 +135,7 @@ $(document).ready(async function () {
       return;
     }
 
-    window.location.href = "index.html";
+    window.location.href = "index.php";
   });
 
   $("#productForm").submit(function (e) {

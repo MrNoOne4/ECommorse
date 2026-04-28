@@ -188,7 +188,7 @@ async function validateLogin(e) {
     return;
   }
 
-  window.location.href = "index.html";
+  window.location.href = "index.php";
   const product = await loadProducts();
   displayProducts(product);
   renderTransaction();
