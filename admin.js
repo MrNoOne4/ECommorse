@@ -88,8 +88,6 @@ $(document).ready(async function () {
   function hideAllSections() {
     $("#productDashboard").hide();
     $("#transactionContainer").hide();
-    // FIX: was "#transactionHistorySection" but section ID in HTML was "transactionHistory" —
-    // now both are aligned: HTML id="transactionHistorySection", JS targets "#transactionHistorySection"
     $("#transactionHistorySection").hide();
     $("#cancelRecordContainer").hide();
   }
@@ -113,20 +111,18 @@ $(document).ready(async function () {
     displayTransaction(currentPage);
   });
 
-  // FIX: listener now targets the nav link ID "#transactionHistory"
-  // which matches the HTML nav <a id="transactionHistory">
   $("#transactionHistory").click(function (e) {
     e.preventDefault();
     showSection("#transactionHistorySection");
+    // FIX: trigger a fresh load when navigating to the section
+    displayHistoryTransaction(currentHistoryPage);
   });
 
-  // FIX: listener targets "#cancelNav" which matches the HTML nav <a id="cancelNav">
   $("#cancelNav").click(function (e) {
     e.preventDefault();
     showSection("#cancelRecordContainer");
     displayCancellations();
   });
-
 
   $("#logoutNav").click(async function () {
     if (!confirm("Do you want to log out?")) return;
@@ -158,7 +154,7 @@ $(document).ready(async function () {
     displayItems();
   });
 
-  window.editProduct = async function (id) {  
+  window.editProduct = async function (id) {
     currentEditId = id;
 
     const req = await fetch(
@@ -182,8 +178,6 @@ $(document).ready(async function () {
 
     window.openModalUpdate();
   };
-
-
 
   async function displayItems() {
     $("#itemContainer").html("");
@@ -257,7 +251,13 @@ $(document).ready(async function () {
     }
 
     clearBtn();
-    displayHistory();
+
+    // FIX: removed displayHistory() call from here.
+    // displayHistory() writes to #tbodyHistory — the same element used by
+    // displayHistoryTransaction(). Calling both caused a race condition where
+    // one would silently overwrite the other. History is now only loaded when
+    // the user navigates to the Transaction History section or after a
+    // cancellation status update.
   }
 
   overlay.addEventListener("click", function (e) {
@@ -265,17 +265,17 @@ $(document).ready(async function () {
       window.closeModal();
     }
   });
-  
+
   async function getTransactionRecord(page = 1) {
     const req = await fetch(`transactiondb.php?page=${page}`, {
-        method: "GET"
+      method: "GET"
     });
 
     const res = await req.json();
 
     if (!req.ok) {
-        console.log("Something went wrong");
-        return [];
+      console.log("Something went wrong");
+      return [];
     }
 
     return res;
@@ -283,14 +283,14 @@ $(document).ready(async function () {
 
   async function getTransactionHistoryRecord(page = 1) {
     const req = await fetch(`getHistoryRefund.php?page=${page}`, {
-        method: "GET"
+      method: "GET"
     });
 
     const res = await req.json();
 
     if (!req.ok) {
-        console.log("Something went wrong");
-        return [];
+      console.log("Something went wrong");
+      return [];
     }
 
     return res;
@@ -300,51 +300,48 @@ $(document).ready(async function () {
     return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2 });
   }
 
-  
-async function displayHistoryTransaction(page = 1) {
-  const result = await getTransactionHistoryRecord(page);
+  async function displayHistoryTransaction(page = 1) {
+    const result = await getTransactionHistoryRecord(page);
 
-  if (!result) return;
+    if (!result) return;
 
-  const data = result.data;
-  const tbody = $("#tbodyHistory");
+    const data = result.data;
+    const tbody = $("#tbodyHistory");
 
-  if (!Array.isArray(data) || data.length === 0) {
-    tbody.html(`
-      <tr>
-        <td colspan="8" class="text-center py-10 text-gray-400">
-          No transaction history found
-        </td>
-      </tr>
-    `);
-    return null;
+    if (!Array.isArray(data) || data.length === 0) {
+      tbody.html(`
+        <tr>
+          <td colspan="8" class="text-center py-10 text-gray-400">
+            No transaction history found
+          </td>
+        </tr>
+      `);
+      return null;
+    }
+
+    let rows = "";
+
+    for (let c of data) {
+      rows += `
+        <tr>
+          <td>${c.date}</td>
+          <td>${c.productName}</td>
+          <td>${c.referenceCode}</td>
+          <td>${c.email}</td>
+          <td class="text-center">${c.quantity ?? 1}</td>
+          <td class="text-right">${c.price ?? 0}</td>
+          <td class="text-right">${c.totalSales ?? 0}</td>
+          <td class="text-right">${c.refundStatus ?? "Pending"}</td>
+        </tr>
+      `;
+    }
+
+    tbody.html(rows);
+
+    $("#pageNumberHistory").text(page);
+
+    return data;
   }
-
-  let rows = "";
-
-  for (let c of data) {
-    rows += `
-      <tr>
-        <td>${c.date}</td>
-        <td>${c.productName}</td>
-        <td>${c.referenceCode}</td>
-        <td>${c.email}</td>
-        <td class="text-center">${c.quantity ?? 1}</td>
-        <td class="text-right">${c.price ?? 0}</td>
-        <td class="text-right">${c.totalSales ?? 0}</td>
-        <td class="text-right">${c.refundStatus ?? "Pending"}</td>
-      </tr>
-    `;
-  }
-
-  tbody.html(rows);
-
-  $("#pageNumberHistory").text(page);
-
-  return data; 
-}
-
-
 
   async function displayTransaction(page = 1) {
     const transac = await getTransactionRecord(page);
@@ -411,12 +408,12 @@ async function displayHistoryTransaction(page = 1) {
   async function productFormSubmit(e) {
     e.preventDefault();
 
-    const name = $("#productName").val().trim();
-    const price = parseFloat($("#productPrice").val());
-    const category = $("#categoryFilter").val();
-    const quantity = parseInt($("#productQty").val());
+    const name        = $("#productName").val().trim();
+    const price       = parseFloat($("#productPrice").val());
+    const category    = $("#categoryFilter").val();
+    const quantity    = parseInt($("#productQty").val());
     const description = $("#productDescription").val().trim();
-    const imageUrl = $("#productImage").val().trim();
+    const imageUrl    = $("#productImage").val().trim();
 
     if (!name) {
       myToast("Product Name must not be empty.", "Danger");
@@ -478,36 +475,19 @@ async function displayHistoryTransaction(page = 1) {
   async function productUpdateFormSubmit(e) {
     e.preventDefault();
 
-    const name = $("#productUpdateName").val().trim();
-    const price = parseFloat($("#productUpdatePrice").val());
-    const category = $("#categoryUpdateFilter").val();
-    const quantity = parseInt($("#productUpdateQty").val());
+    const name        = $("#productUpdateName").val().trim();
+    const price       = parseFloat($("#productUpdatePrice").val());
+    const category    = $("#categoryUpdateFilter").val();
+    const quantity    = parseInt($("#productUpdateQty").val());
     const description = $("#productUpdateDescription").val().trim();
-    const imageUrl = $("#productUpdateImage").val().trim();
+    const imageUrl    = $("#productUpdateImage").val().trim();
 
-    if (!name) {
-        return myToast("Product Name must not be empty.", "Danger");
-    }
-
-    if (!description) {
-        return myToast("Product Description must not be empty.", "Danger");
-    }
-
-    if (!imageUrl) {
-        return myToast("Product must have an image.", "Danger");
-    }
-
-    if (category === "all") {
-        return myToast("Please select a category.", "Danger");
-    }
-
-    if (isNaN(price) || isNaN(quantity)) {
-        return myToast("Invalid numbers.", "Danger");
-    }
-
-    if (price <= 0 || quantity <= 0) {
-        return myToast("Must be greater than zero.", "Danger");
-    }
+    if (!name)        return myToast("Product Name must not be empty.", "Danger");
+    if (!description) return myToast("Product Description must not be empty.", "Danger");
+    if (!imageUrl)    return myToast("Product must have an image.", "Danger");
+    if (category === "all") return myToast("Please select a category.", "Danger");
+    if (isNaN(price) || isNaN(quantity)) return myToast("Invalid numbers.", "Danger");
+    if (price <= 0 || quantity <= 0) return myToast("Must be greater than zero.", "Danger");
 
     try {
       const res = await fetch(
@@ -592,19 +572,20 @@ async function displayHistoryTransaction(page = 1) {
 
   $("#prevBtn").on("click", function () {
     if (currentPage > 1) {
-        currentPage--;
-        displayTransaction(currentPage);
-        $("#pageNumber").text(currentPage);
+      currentPage--;
+      displayTransaction(currentPage);
+      $("#pageNumber").text(currentPage);
     }
   });
 
+  // FIX: prevBtnHistory was missing the #pageNumberHistory text update
   $("#prevBtnHistory").on("click", function () {
     if (currentHistoryPage > 1) {
       currentHistoryPage--;
       displayHistoryTransaction(currentHistoryPage);
+      // pageNumberHistory is now updated inside displayHistoryTransaction()
     }
   });
-
 
   $("#nextBtn").on("click", async function () {
     const nextPage = currentPage + 1;
@@ -621,9 +602,8 @@ async function displayHistoryTransaction(page = 1) {
     if (!data || !data.data || data.data.length === 0) return;
     currentHistoryPage = nextPage;
     displayHistoryTransaction(currentHistoryPage);
+    // pageNumberHistory is now updated inside displayHistoryTransaction()
   });
-
-
 
   const cancelOverlay = document.getElementById("cancelOverlay");
 
@@ -637,9 +617,9 @@ async function displayHistoryTransaction(page = 1) {
 
   window.viewCancellation = async function (cancellationId, orderItemId) {
     currentCancellationId.cancellationId = cancellationId;
-    currentCancellationId.orderItemId = orderItemId;
+    currentCancellationId.orderItemId    = orderItemId;
 
-    const res = await fetch(`cancellationdb.php?id=${cancellationId}`);
+    const res  = await fetch(`cancellationdb.php?id=${cancellationId}`);
     const data = await res.json();
 
     $('#images').attr('src', data.img);
@@ -671,8 +651,8 @@ async function displayHistoryTransaction(page = 1) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         cancellationId: currentCancellationId.cancellationId,
-        orderItemId: currentCancellationId.orderItemId,
-        status: status
+        orderItemId:    currentCancellationId.orderItemId,
+        status:         status
       })
     });
 
@@ -686,10 +666,11 @@ async function displayHistoryTransaction(page = 1) {
     myToast(`Request ${status}`, "Success");
 
     closeCancelModal();
-    displayHistory();
-    displayCancellations();
-  }
 
+    // FIX: after approving/declining, refresh the history table too
+    displayCancellations();
+    displayHistoryTransaction(currentHistoryPage);
+  }
 
   async function displayCancellations() {
     const res = await fetch("refund.php", {
@@ -703,7 +684,6 @@ async function displayHistoryTransaction(page = 1) {
 
     const data = await res.json();
 
-    console.log(data);
     let rows = "";
 
     if (!data || data.length === 0) {
@@ -719,14 +699,14 @@ async function displayHistoryTransaction(page = 1) {
 
     for (let c of data) {
       rows += `
-        <tr class="border-b hover:bg-gray-50 transition">
-          <td class="px-6 py-4">${c.cancellationId}</td>
-          <td class="px-6 py-4 font-medium text-gray-900">${c.referenceCode}</td>
-          <td class="px-6 py-4">${c.product}</td>
-          <td class="px-6 py-4">${c.user}</td>
-          <td class="px-6 py-4">${c.reason}</td>
-          <td class="px-6 py-4">${c.date}</td>
-          <td class="px-6 py-4 text-center">
+        <tr class="hover:bg-blue-50 even:bg-gray-50 transition-colors">
+          <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">${c.cancellationId}</td>
+          <td class="px-4 py-3 font-medium text-gray-800">${c.referenceCode}</td>
+          <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">${c.product}</td>
+          <td class="px-4 py-3 text-xs text-gray-400">${c.user}</td>
+          <td class="px-4 py-3 text-center">${c.reason}</td>
+          <td class="px-4 py-3 text-right text-gray-500 text-sm">${c.date}</td>
+          <td class="text-green-700 bg-green-50 font-medium text-sm px-2 py-0.5 rounded">
             <button
               onclick="viewCancellation(${c.cancellationId}, ${c.orderItemId})"
               class="px-4 py-2 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
@@ -741,55 +721,8 @@ async function displayHistoryTransaction(page = 1) {
     $("#cancelTbody").html(rows);
   }
 
-async function displayHistory() {
-  const res = await fetch("getHistoryRefund.php", {
-    method: "GET",
-  });
-
-  if (!res.ok) {
-    myToast("Failed to load history.", "Danger");
-    return;
-  }
-
-  const result = await res.json();
-  const data = result.data;
-
-  console.log(result);
-
-  if (!Array.isArray(data) || data.length === 0) {
-    $("#tbodyHistory").html(`
-      <tr>
-        <td colspan="8" class="text-center py-10 text-gray-400">
-          No transaction history found
-        </td>
-      </tr>
-    `);
-    return;
-  }
-
-  let rows = "";
-
-  for (let c of data) {
-    rows += `
-      <tr class="border-b hover:bg-gray-50 transition">
-        <td class="px-4  py-3">${c.date}</td>
-        <td class="px-4  py-3">${c.productName}</td>
-        <td class="px-4  py-3">${c.referenceCode}</td>
-        <td class="px-4  py-3">${c.email}</td>
-        <td class="px-4  py-3 text-center">${c.quantity ?? 1}</td>
-        <td class="px-4  py-3 text-right">${c.price ?? 0}</td>
-        <td class="px-4  py-3 text-right">${c.totalSales ?? 0}</td>
-        <td class="px-4  py-3 text-right">${c.refundStatus ?? "Pending"}</td>
-      </tr>
-    `;
-  }
-
-  $("#tbodyHistory").html(rows);
-}
-
-
-
   displayCancellations();
-  displayHistory();
+
+
   displayHistoryTransaction(1);
 });

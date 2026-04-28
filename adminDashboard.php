@@ -113,7 +113,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
           <ul class="list-none space-y-2 p-0 m-0">
 
             <li>
-              <!-- FIX: was #productNav — kept the same, matches JS -->
               <a href="#" id="productNav"
                 class="nav-link text-slate-300 block px-5 py-3 rounded-md hover:bg-slate-800 hover:text-white">
                 Products
@@ -121,7 +120,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             </li>
 
             <li>
-              <!-- FIX: was #refundNav — renamed to #cancelNav to match JS -->
               <a href="#" id="cancelNav"
                 class="nav-link text-slate-300 block px-5 py-3 rounded-md hover:bg-slate-800 hover:text-white">
                 Refund Requests
@@ -129,7 +127,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             </li>
 
             <li>
-              <!-- FIX: was #historyNav — renamed to #transactionHistory to match JS -->
               <a href="#" id="transactionHistory"
                 class="nav-link text-slate-300 block px-5 py-3 rounded-md hover:bg-slate-800 hover:text-white">
                 Transaction History
@@ -137,7 +134,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
             </li>
 
             <li>
-              <!-- FIX: was #transactionNav — kept the same, matches JS -->
               <a href="#" id="transactionNav"
                 class="nav-link text-slate-300 block px-5 py-3 rounded-md hover:bg-slate-800 hover:text-white">
                 Transaction Record
@@ -287,7 +283,6 @@ if (!isset($_SESSION["user"]) || $_SESSION["user"]["role"] !== "admin") {
           </div>
         </section>
 
-        <!-- Transaction Record Section -->
         <section id="transactionContainer" class="h-full w-full">
           <h2 class="text-4xl font-bold text-slate-900 mb-6">Transaction Record</h2>
           <div class="mx-auto max-h-screen px-4 py-8 sm:px-8">

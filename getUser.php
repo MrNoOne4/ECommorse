@@ -15,7 +15,7 @@ $sql = "SELECT id, email FROM Users WHERE email = ?";
 $stmt = $db->prepare($sql);
 
 if (!$stmt) {
-    exit(json_encode(["error" => $db->error]));
+    exit(json_encode(["error" => "Database error"])); // FIX: don't expose $db->error to client
 }
 
 $stmt->bind_param("s", $email);
@@ -24,12 +24,9 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($row = $result->fetch_assoc()) {
-
-    echo json_encode(["found" => true, "account" => ["id" => $row["id"], "email" => $row["email"]]])
+    echo json_encode(["found" => true, "account" => ["id" => $row["id"], "email" => $row["email"]]]);
 } else {
-    echo json_encode([
-        "found" => false
-    ]);
+    echo json_encode(["found" => false]);
 }
 
 $stmt->close();

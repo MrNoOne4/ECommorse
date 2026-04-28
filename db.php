@@ -1,6 +1,4 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 class Database {
     private $host = "localhost";
@@ -8,7 +6,6 @@ class Database {
     private $pass = "M@thew11!";
     private $dbname = "ECommorse";
     private $connection;
-
 
     public function __construct() {
         $this->connection = new mysqli(
@@ -19,7 +16,10 @@ class Database {
         );
 
         if ($this->connection->connect_error) {
-            die("Database Connection Failed: " . $this->connection->connect_error);
+            // FIX: Don't expose raw DB error to client
+            http_response_code(500);
+            echo json_encode(["error" => "Database connection failed"]);
+            exit;
         }
     }
 
